@@ -1,4 +1,4 @@
-# 🧠 ChipManager
+# ChipManager
 
 A simple and friendly Poker Manager for home games with friends.  
 Track buy-ins, manage balances, and bring order to the chaos 🎲
