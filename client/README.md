@@ -1,12 +1,39 @@
-# React + Vite
+# 🧠 ChipManager
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A simple and friendly Poker Manager for home games with friends.  
+Track buy-ins, manage balances, and bring order to the chaos 🎲
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Tech Stack
 
-## Expanding the ESLint configuration
+- 🧩 React (Vite)
+- 🎨 CSS
+- ☁️ Firebase (coming soon)
+- 🔧 Node.js Backend (planned)
 
-If you are developing a production application, we recommend using TypeScript and enable type-aware lint rules. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+## 🖥️ Features
+
+- ✅ Add and manage players
+- ✅ Track buy-ins live
+- 🔒 Lock game session (coming soon)
+- 🧾 Game history log (coming soon)
+- 🔐 Admin / Guest modes (planned)
+
+---
+
+## 📷 Screenshot
+
+> Coming soon (add one when design is ready!)
+
+---
+
+## 💻 Getting Started
+
+```bash
+git clone https://github.com/yos4i/chipmanager.git
+cd chipmanager/client
+npm install
+npm run dev
