@@ -13,7 +13,7 @@ import AddPlayerForm from "./components/AddPlayerForm";
 import PlayersTable from "./components/PlayersTable";
 import HistoryList from "./components/HistoryList";
 import Lobby from "./components/Lobby";
-import Home from "./components/Home";
+
 
 function App() {
   const [players, setPlayers] = useState([]);
@@ -146,7 +146,7 @@ function App() {
   };
 
   if (!roomId) return <Lobby onSelectRoom={handleRoomSelect} />;
-  if (!isOwner && !isGuest) return <Home onGuestLogin={() => setIsGuest(true)} />;
+
 
   return (
     <div style={{ fontFamily: 'sans-serif', direction: 'rtl', padding: '2rem', background: '#f8f8f8' }}>

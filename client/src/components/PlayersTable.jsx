@@ -1,4 +1,6 @@
 // PlayersTable.jsx - פתרון סופי: אתחול ערכים והצגה בטוחה ללא NaN/undefined
+import './actions.css';
+
 export default function PlayersTable({ players, onAddAmount, onSetCashOut, onEdit, onEndGame, isLocked }) {
   return (
     <div style={{ background: '#fff', padding: '1rem', borderRadius: '8px', marginTop: '1rem' }}>
@@ -29,11 +31,12 @@ export default function PlayersTable({ players, onAddAmount, onSetCashOut, onEdi
                 <tr key={index}>
                   <td>{player.name || '-'}</td>
                   <td>{isBuyInValid ? `₪${buyIn}` : '-'}</td>
-                  <td>
-                    <button disabled={isLocked} onClick={() => onAddAmount(index)}>+ ₪50</button>
-                    <button disabled={isLocked} onClick={() => onSetCashOut(index)}>💸 סיום</button>
-                    <button disabled={isLocked} onClick={() => onEdit(index)}>✏️ ערוך</button>
+                  <td className="actions-column">
+                    <button className="action-button">+ ₪50</button>
+                    <button className="action-button">סיום 💎</button>
+                    <button className="action-button">ערוך ✏️</button>
                   </td>
+
                   <td>{isCashOutDefined ? `₪${cashOut}` : '-'}</td>
                   <td>
                     {profit !== null ? (
