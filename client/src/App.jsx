@@ -1,14 +1,14 @@
-// App.jsx - גרסה מתוקנת: שמירה עם update במקום set למניעת דריסה של locked
 import React, { useState, useEffect } from 'react';
 import {
   database,
   ref,
-  set,
+  // set,
   onValue,
   update,
-  createRoom,
-  isRoomOwner
+  createRoom, // ודא שזו קיימת אצלך
+  isRoomOwner  // גם זו
 } from './firebase';
+
 import AddPlayerForm from "./components/AddPlayerForm";
 import PlayersTable from "./components/PlayersTable";
 import HistoryList from "./components/HistoryList";
@@ -23,15 +23,16 @@ function App() {
   const [roomId, setRoomId] = useState(localStorage.getItem('roomId') || '');
   const [isLocked, setIsLocked] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
-  const [isGuest, setIsGuest] = useState(false);
 
   const handleRoomSelect = async (selectedRoomId) => {
     localStorage.setItem('roomId', selectedRoomId);
     setRoomId(selectedRoomId);
   };
 
+
   useEffect(() => {
     if (!roomId) return;
+
     const roomRef = ref(database, `rooms/${roomId}`);
 
     onValue(roomRef, async (snapshot) => {
@@ -41,6 +42,7 @@ function App() {
         setRoomId(newRoomId);
         return;
       }
+
       setPlayers(data.players || []);
       setHistory(data.history || []);
       setSummaryLines(data.summaryLines || []);
@@ -96,18 +98,20 @@ function App() {
 
   const editPlayer = (index) => {
     if (!isOwner || isLocked) return;
-    const name = prompt('שם חדש:', players[index].name);
+    const prevName = players[index].name;
+    const name = prompt('שם חדש:', prevName);
     const buyIn = prompt('סכום כניסה חדש:', players[index].buyIn);
     if (!name || isNaN(parseInt(buyIn))) return;
     const updated = [...players];
     updated[index].name = name;
     updated[index].buyIn = parseInt(buyIn);
-    logAction(`${players[index].name} עודכן לשם ${name} וסכום ₪${buyIn}`);
+    logAction(`${prevName} עודכן לשם ${name} וסכום ₪${buyIn}`);
     setPlayers(updated);
   };
 
   const endGame = () => {
     if (!isOwner || isLocked) return;
+
     const balances = players.map(p => ({
       name: p.name,
       diff: (p.cashOut || 0) - p.buyIn
@@ -145,55 +149,60 @@ function App() {
     }, 3000);
   };
 
+  // 👇 אם אין roomId – הצג דף כניסה
   if (!roomId) return <Lobby onSelectRoom={handleRoomSelect} />;
 
 
+  // 👇 אחרת – חדר המשחק
   return (
-    <div style={{ fontFamily: 'sans-serif', direction: 'rtl', padding: '2rem', background: '#f8f8f8' }}>
-      <h1 style={{ textAlign: 'center' }}>אפליקציית פוקר - חדר {roomId}</h1>
-      <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-        <button
-          onClick={() => {
-            localStorage.removeItem('roomId');
-            setRoomId('');
-          }}
-          style={{
-            padding: '8px 16px',
-            fontSize: '14px',
-            background: '#ddd',
-            border: '1px solid #aaa',
-            borderRadius: '6px',
-            cursor: 'pointer'
-          }}
-        >
-          🔙 חזרה ללובי
-        </button>
+      <div style={{ fontFamily: 'sans-serif', direction: 'rtl', padding: '2rem', background: '#f8f8f8' }}>
+        <h1 style={{ textAlign: 'center' }}>אפליקציית פוקר - חדר {roomId}</h1>
+
+        <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+          <button
+              onClick={() => {
+                localStorage.removeItem('roomId');
+                setRoomId('');
+              }}
+              style={{
+                padding: '8px 16px',
+                fontSize: '14px',
+                background: '#ddd',
+                border: '1px solid #aaa',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
+          >
+            🔙 חזרה ללובי
+          </button>
+        </div>
+
+        {isLocked && (
+            <div style={{ color: 'red', textAlign: 'center', marginBottom: '1rem' }}>
+              המשחק הסתיים – צפייה בלבד
+            </div>
+        )}
+
+        {isOwner && !isLocked && <AddPlayerForm onAdd={handleAddPlayer} />}
+
+        <PlayersTable
+            players={players}
+            onAddAmount={addAmount}
+            onSetCashOut={setCashOut}
+            onEdit={editPlayer}
+            onEndGame={endGame}
+            isLocked={!isOwner || isLocked}
+        />
+
+        <HistoryList history={history} />
+
+        {summaryLines.length > 0 && (
+            <div style={{ background: '#fff', padding: '1rem', borderRadius: '8px', marginTop: '1rem' }}>
+              <h3>סיכום המשחק:</h3>
+              <ul>{summaryLines.map((line, i) => <li key={i}>{line}</li>)}</ul>
+            </div>
+        )}
       </div>
-
-      {isLocked && (
-        <div style={{ color: 'red', textAlign: 'center', marginBottom: '1rem' }}>
-          המשחק הסתיים – צפייה בלבד
-        </div>
-      )}
-
-      {isOwner && !isLocked && <AddPlayerForm onAdd={handleAddPlayer} />}
-      <PlayersTable
-        players={players}
-        onAddAmount={addAmount}
-        onSetCashOut={setCashOut}
-        onEdit={editPlayer}
-        onEndGame={endGame}
-        isLocked={!isOwner || isLocked}
-      />
-      <HistoryList history={history} />
-
-      {summaryLines.length > 0 && (
-        <div style={{ background: '#fff', padding: '1rem', borderRadius: '8px', marginTop: '1rem' }}>
-          <h3>סיכום המשחק:</h3>
-          <ul>{summaryLines.map((line, i) => <li key={i}>{line}</li>)}</ul>
-        </div>
-      )}
-    </div>
   );
 }
 
