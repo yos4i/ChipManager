@@ -1,40 +1,58 @@
 import React, { useState, useEffect } from 'react';
-import {
-  database,
-  ref,
-  // set,
-  onValue,
-  update,
-  createRoom, // ודא שזו קיימת אצלך
-  isRoomOwner  // גם זו
-} from './firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from './firebase';
 
+import Login from './components/Login';
+import HomePage from './components/HomePage';
+import Lobby from './components/Lobby';
 import AddPlayerForm from "./components/AddPlayerForm";
 import PlayersTable from "./components/PlayersTable";
 import HistoryList from "./components/HistoryList";
-import Lobby from "./components/Lobby";
 
+import {
+  database,
+  ref,
+  onValue,
+  update,
+  createRoom,
+  isRoomOwner
+} from './firebase';
 
 function App() {
+  const [uid, setUid] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [roomId, setRoomId] = useState(localStorage.getItem('roomId') || '');
   const [players, setPlayers] = useState([]);
   const [history, setHistory] = useState([]);
   const [summaryLines, setSummaryLines] = useState([]);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
-  const [roomId, setRoomId] = useState(localStorage.getItem('roomId') || '');
   const [isLocked, setIsLocked] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) setUid(user.uid);
+      else setUid(null);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleRoomSelect = async (selectedRoomId) => {
     localStorage.setItem('roomId', selectedRoomId);
     setRoomId(selectedRoomId);
   };
 
+  const handleLogout = async () => {
+    await auth.signOut();
+    localStorage.removeItem('roomId');
+    setUid(null);
+    setRoomId('');
+  };
 
   useEffect(() => {
-    if (!roomId) return;
-
+    if (!roomId || roomId === 'LOBBY') return;
     const roomRef = ref(database, `rooms/${roomId}`);
-
     onValue(roomRef, async (snapshot) => {
       const data = snapshot.val();
       if (!data) {
@@ -42,7 +60,6 @@ function App() {
         setRoomId(newRoomId);
         return;
       }
-
       setPlayers(data.players || []);
       setHistory(data.history || []);
       setSummaryLines(data.summaryLines || []);
@@ -149,14 +166,24 @@ function App() {
     }, 3000);
   };
 
-  // 👇 אם אין roomId – הצג דף כניסה
-  if (!roomId) return <Lobby onSelectRoom={handleRoomSelect} />;
+  if (loading) {
+    return (
+        <div style={{ background: '#0e0e0e', height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <img src="/ChipManagerLogo.png" alt="Loading..." style={{ height: 100 }} />
+        </div>
+    );
+  }
 
+  if (!uid) return <Login onLogin={(id) => setUid(id)} />;
+  if (!roomId) return <HomePage onStart={() => setRoomId("LOBBY")} onLogout={handleLogout} />;
+  if (roomId === "LOBBY") return <Lobby onSelectRoom={handleRoomSelect} />;
 
-  // 👇 אחרת – חדר המשחק
   return (
       <div style={{ fontFamily: 'sans-serif', direction: 'rtl', padding: '2rem', background: '#f8f8f8' }}>
-        <h1 style={{ textAlign: 'center' }}>אפליקציית פוקר - חדר {roomId}</h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h1>אפליקציית פוקר - חדר {roomId}</h1>
+          <button onClick={handleLogout} style={{ background: '#f44336', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer' }}>התנתק</button>
+        </div>
 
         <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
           <button

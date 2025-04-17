@@ -1,4 +1,4 @@
-// firebase.js - מעודכן: מזהה חדר תקני + createdAt נפרד
+// firebase.js - כולל יצירת חדר + משתמשים בסיסיים
 import { initializeApp } from "firebase/app";
 import {
   getDatabase,
@@ -9,6 +9,12 @@ import {
   remove,
   get
 } from "firebase/database";
+
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword
+} from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCE8meJjumBFoXc_MBJkfCtnMC-JsAT9k4",
@@ -23,12 +29,14 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
+const auth = getAuth(app);
 
+// פונקציה ליצירת מזהה ייחודי
 function generateUniqueId() {
   return Math.random().toString(36).substring(2) + Date.now().toString(36);
 }
 
-// פונקציה מעודכנת: יצירת roomId תקני + שמירת createdAt נפרד
+// יצירת חדר חדש עם createdAt
 async function createRoom() {
   const now = new Date();
   const createdAt = now.toLocaleString("he-IL", {
@@ -50,6 +58,7 @@ async function createRoom() {
   return roomId;
 }
 
+// בדיקה האם המשתמש הנוכחי הוא בעל החדר
 async function isRoomOwner(roomId) {
   const currentUserId = localStorage.getItem("ownerId");
   const roomSnapshot = await get(ref(database, `rooms/${roomId}`));
@@ -58,12 +67,38 @@ async function isRoomOwner(roomId) {
   return roomData.ownerId === currentUserId;
 }
 
+// מחיקת חדר
 async function deleteRoom(roomId) {
   await remove(ref(database, `rooms/${roomId}`));
 }
 
+// ניקוי שחקנים
 async function clearRoomPlayers(roomId) {
   await set(ref(database, `rooms/${roomId}/players`), []);
+}
+
+// הרשמה עם אימייל + סיסמה
+async function register(email, password, displayName) {
+  const result = await createUserWithEmailAndPassword(auth, email, password);
+  const user = result.user;
+
+  await set(ref(database, `users/${user.uid}`), {
+    name: displayName,
+    email: user.email
+  });
+
+  return user;
+}
+
+// התחברות עם אימייל + סיסמה
+async function login(email, password) {
+  const result = await signInWithEmailAndPassword(auth, email, password);
+  return result.user;
+}
+
+// הפניה ישירה לנתיב משתמש
+function getUserRef(uid) {
+  return ref(database, `users/${uid}`);
 }
 
 export {
@@ -74,9 +109,13 @@ export {
   update,
   remove,
   get,
+  auth,
   createRoom,
   isRoomOwner,
   deleteRoom,
   clearRoomPlayers,
-  generateUniqueId
+  generateUniqueId,
+  register,
+  login,
+  getUserRef
 };
