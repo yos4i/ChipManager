@@ -1,89 +1,95 @@
-// PlayersTable.jsx - גרסה מתוקנת בלי CSS חיצוני
+import React from 'react';
 
 export default function PlayersTable({ players, onAddAmount, onSetCashOut, onEdit, onEndGame, isLocked }) {
     return (
-        <div style={{ background: '#fff', padding: '1rem', borderRadius: '8px', marginTop: '1rem', direction: 'rtl' }}>
-            <h3 style={{ marginBottom: '1rem', color: '#000' }}>טבלת שחקנים</h3>
+        <div style={{ background: '#1a1a1a', padding: '1rem', borderRadius: '10px', marginTop: '2rem' }}>
+            <h2 style={{ textAlign: 'center', color: '#fff', marginBottom: '1.5rem' }}>טבלת שחקנים</h2>
 
             {players.length > 0 ? (
-                <table style={{ width: '100%', textAlign: 'center', borderCollapse: 'collapse', color: '#000' }}>
-                    <thead>
-                    <tr>
-                        <th>שם</th>
-                        <th>Buy-in</th>
-                        <th>פעולות</th>
-                        <th>סיים עם</th>
-                        <th>רווח/הפסד</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {players.map((player, index) => {
-                        const buyIn = Number(player.buyIn);
-                        const cashOut = player.cashOut;
+                players.map((player, index) => {
+                    const buyIn = Number(player.buyIn);
+                    const cashOut = player.cashOut;
 
-                        const isCashOutDefined = typeof cashOut === 'number' && !isNaN(cashOut);
-                        const isBuyInValid = typeof buyIn === 'number' && !isNaN(buyIn);
+                    const isCashOutDefined = typeof cashOut === 'number' && !isNaN(cashOut);
+                    const isBuyInValid = typeof buyIn === 'number' && !isNaN(buyIn);
 
-                        const profit = isCashOutDefined && isBuyInValid ? cashOut - buyIn : null;
+                    const profit = isCashOutDefined && isBuyInValid ? cashOut - buyIn : null;
 
-                        return (
-                            <tr key={index}>
-                                <td>{player.name || '-'}</td>
-                                <td>{isBuyInValid ? `₪${buyIn}` : '-'}</td>
-                                <td>
-                                    <button
-                                        style={{ margin: '2px', padding: '6px', background: '#007bff', color: '#fff', border: 'none', borderRadius: '4px' }}
-                                        onClick={() => onAddAmount(index, 50)}
-                                    >
-                                        + ₪50
-                                    </button>
-                                    <button
-                                        style={{ margin: '2px', padding: '6px', background: '#ffc107', color: '#000', border: 'none', borderRadius: '4px' }}
-                                        onClick={() => onSetCashOut(index)}
-                                    >
-                                        סיום 💎
-                                    </button>
-                                    <button
-                                        style={{ margin: '2px', padding: '6px', background: '#6c757d', color: '#fff', border: 'none', borderRadius: '4px' }}
-                                        onClick={() => onEdit(index)}
-                                    >
-                                        ערוך ✏️
-                                    </button>
-                                </td>
-                                <td>{isCashOutDefined ? `₪${cashOut}` : '-'}</td>
-                                <td>
-                                    {profit !== null ? (
-                                        <span style={{ color: profit >= 0 ? 'green' : 'red', fontWeight: 'bold' }}>
-                        {profit >= 0 ? `+₪${profit}` : `₪${profit}`}
-                      </span>
-                                    ) : '-'}
-                                </td>
-                            </tr>
-                        );
-                    })}
-                    </tbody>
-                </table>
+                    return (
+                        <div key={index} style={{
+                            background: '#111',
+                            border: '1px solid #d4af37',
+                            borderRadius: '10px',
+                            padding: '1rem',
+                            marginBottom: '1rem',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            color: '#fff'
+                        }}>
+                            <div>
+                                <h3 style={{ margin: '0 0 0.5rem' }}>{player.name || '-'}</h3>
+                                <p style={{ margin: '0.25rem 0' }}>Buy-in: {isBuyInValid ? `₪${buyIn}` : '-'}</p>
+                                <p style={{ margin: '0.25rem 0' }}>Cash-out: {isCashOutDefined ? `₪${cashOut}` : '-'}</p>
+                                <p style={{
+                                    margin: '0.25rem 0',
+                                    color: profit !== null ? (profit >= 0 ? 'lightgreen' : 'red') : '#aaa',
+                                    fontWeight: 'bold'
+                                }}>
+                                    {profit !== null ? (profit >= 0 ? `+₪${profit}` : `₪${profit}`) : '-'}
+                                </p>
+                            </div>
+
+                            {!isLocked && (
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                    <button onClick={() => onAddAmount(index)} style={buttonStyle('blue')}>💵</button>
+                                    <button onClick={() => onSetCashOut(index)} style={buttonStyle('green')}>🏁</button>
+                                    <button onClick={() => onEdit(index)} style={buttonStyle('gray')}>✏️</button>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })
             ) : (
-                <p style={{ textAlign: 'center', marginTop: '1rem', color: '#000' }}>לא נוספו שחקנים עדיין</p>
+                <p style={{ color: '#ccc', textAlign: 'center' }}>לא נוספו שחקנים עדיין</p>
             )}
 
-            <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-                <button
-                    disabled={isLocked}
-                    onClick={onEndGame}
-                    style={{
-                        background: isLocked ? '#bbb' : '#4CAF50',
-                        color: '#fff',
-                        padding: '10px 20px',
-                        fontSize: '16px',
-                        border: 'none',
-                        borderRadius: '6px',
-                        cursor: isLocked ? 'default' : 'pointer'
-                    }}
-                >
-                    {isLocked ? "המשחק נעול לעריכה" : "סיים משחק"}
-                </button>
-            </div>
+            {!isLocked && (
+                <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+                    <button
+                        onClick={onEndGame}
+                        style={{
+                            background: '#4CAF50',
+                            color: '#fff',
+                            padding: '10px 20px',
+                            fontSize: '16px',
+                            border: 'none',
+                            borderRadius: '8px',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        סיים משחק
+                    </button>
+                </div>
+            )}
         </div>
     );
+}
+
+function buttonStyle(color) {
+    const base = {
+        padding: '0.5rem 0.75rem',
+        borderRadius: '6px',
+        border: 'none',
+        cursor: 'pointer',
+        color: '#fff',
+        fontSize: '1rem'
+    };
+
+    switch (color) {
+        case 'green': return { ...base, background: '#4CAF50' };
+        case 'blue': return { ...base, background: '#2196F3' };
+        case 'gray': return { ...base, background: '#555' };
+        default: return base;
+    }
 }

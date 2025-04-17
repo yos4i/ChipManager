@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function HomePage({ onStart, onLogout }) {
+export default function HomePage({ onStart, onLogout, onStartLobby }) {
     const btnStyle = {
         background: '#d4af37', color: '#000', padding: '0.75rem 1.5rem', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer'
     };
@@ -11,8 +11,7 @@ export default function HomePage({ onStart, onLogout }) {
             {/* Header */}
             <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem' }}>
                 <nav style={{ display: 'flex', gap: '1.5rem' }}>
-                    <a href="#" style={{ color: '#fff', textDecoration: 'none' }}>Start a Game</a>
-                    <a href="#" style={{ color: '#fff', textDecoration: 'none' }}>History</a>
+                    <a href="#" onClick={onStartLobby} style={{ color: '#fff', textDecoration: 'none' }}>History</a>
                 </nav>
                 <button onClick={onLogout} style={{ background: '#f44336', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer' }}>התנתק</button>
             </header>

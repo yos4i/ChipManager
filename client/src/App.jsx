@@ -175,34 +175,35 @@ function App() {
   }
 
   if (!uid) return <Login onLogin={(id) => setUid(id)} />;
-  if (!roomId) return <HomePage onStart={() => setRoomId("LOBBY")} onLogout={handleLogout} />;
+  if (!roomId) return (
+      <HomePage
+          onStart={async () => {
+            const newRoomId = await createRoom();
+            localStorage.setItem("roomId", newRoomId);
+            setRoomId(newRoomId);
+          }}
+          onLogout={handleLogout}
+          onStartLobby={() => setRoomId("LOBBY")}
+      />
+  );
   if (roomId === "LOBBY") return <Lobby onSelectRoom={handleRoomSelect} />;
 
   return (
-      <div style={{ fontFamily: 'sans-serif', direction: 'rtl', padding: '2rem', background: '#f8f8f8' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1>אפליקציית פוקר - חדר {roomId}</h1>
-          <button onClick={handleLogout} style={{ background: '#f44336', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer' }}>התנתק</button>
-        </div>
-
-        <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+      <div style={{ background: '#0e0e0e', color: '#fff', fontFamily: 'sans-serif', minHeight: '100vh', padding: '2rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <img src="/ChipManagerLogo.png" alt="Logo" style={{ height: 50 }} />
           <button
               onClick={() => {
                 localStorage.removeItem('roomId');
                 setRoomId('');
               }}
-              style={{
-                padding: '8px 16px',
-                fontSize: '14px',
-                background: '#ddd',
-                border: '1px solid #aaa',
-                borderRadius: '6px',
-                cursor: 'pointer'
-              }}
+              style={{ background: '#d4af37', color: '#000', padding: '0.5rem 1rem', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
           >
-            🔙 חזרה ללובי
+            🏠 חזרה לעמוד הבית
           </button>
         </div>
+
+        <h1 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>חדר {roomId}</h1>
 
         {isLocked && (
             <div style={{ color: 'red', textAlign: 'center', marginBottom: '1rem' }}>
@@ -224,9 +225,13 @@ function App() {
         <HistoryList history={history} />
 
         {summaryLines.length > 0 && (
-            <div style={{ background: '#fff', padding: '1rem', borderRadius: '8px', marginTop: '1rem' }}>
-              <h3>סיכום המשחק:</h3>
-              <ul>{summaryLines.map((line, i) => <li key={i}>{line}</li>)}</ul>
+            <div style={{ background: '#1a1a1a', padding: '1rem', borderRadius: '8px', marginTop: '1rem', color: '#fff' }}>
+              <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid #444', paddingBottom: '0.5rem' }}>סיכום המשחק:</h3>
+              <ul style={{ paddingRight: '1rem' }}>
+                {summaryLines.map((line, i) => (
+                    <li key={i} style={{ borderBottom: '1px solid #333', padding: '0.5rem 0' }}>{line}</li>
+                ))}
+              </ul>
             </div>
         )}
       </div>

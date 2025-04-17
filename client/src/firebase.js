@@ -43,7 +43,7 @@ async function createRoom() {
     day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
   });
   const roomId = `${now.getFullYear()}_${now.getMonth() + 1}_${now.getDate()}  -  ${now.getHours()}:${now.getMinutes()}`;
-  const ownerId = generateUniqueId();
+  const ownerId = auth.currentUser?.uid;
   localStorage.setItem("ownerId", ownerId);
 
   await set(ref(database, `rooms/${roomId}`), {
