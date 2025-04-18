@@ -12,8 +12,8 @@ function AddPlayerForm({ onAdd }) {
   };
 
   return (
-      <div style={boxStyle}>
-        <h3 style={headerStyle}>הוספת שחקן</h3>
+      <div style={sectionBoxStyle}>
+        <h2 style={sectionTitleStyle}>הוספת שחקן</h2>
         <input
             type="text"
             placeholder="שם שחקן"
@@ -33,21 +33,24 @@ function AddPlayerForm({ onAdd }) {
   );
 }
 
-const boxStyle = {
+const sectionBoxStyle = {
   background: '#1a1a1a',
   padding: '20px',
-  borderRadius: '8px',
-  boxShadow: '0 0 10px #000',
-  flex: 1,
-  minWidth: '300px',
+  borderRadius: '10px',
+  boxShadow: '0 0 10px rgba(0, 0, 0, 0.5)',
   color: '#ffffff',
-  marginBottom: '1.5rem'
+  marginBottom: '1.5rem',
+  minWidth: '300px',
+
 };
 
-const headerStyle = {
+const sectionTitleStyle = {
   textAlign: 'center',
-  color: '#d4af37',
-  marginBottom: '1rem'
+  color: '#fff',
+  fontSize: '1.5rem',
+  marginBottom: '1rem',
+  borderBottom: '1px solid #d4af37',
+  paddingBottom: '0.5rem'
 };
 
 const inputStyle = {

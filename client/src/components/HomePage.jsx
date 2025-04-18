@@ -75,7 +75,7 @@ export default function HomePage({ onStart, onLogout, onStartLobby }) {
 
             {/* Recent Games */}
             <section style={sectionStyle}>
-                <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>{isHebrew ? 'המשחקים האחרונים שלך' : 'Your Recent Games'}</h2>
+                <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', textAlign: 'center' }}>{isHebrew ? 'המשחקים האחרונים שלך' : 'Your Recent Games'}</h2>
                 <div style={{ background: '#1a1a1a', borderRadius: '10px', overflow: 'hidden' }}>
                     {recentRooms.slice(0, 4).map((room, idx) => (
                         <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', borderBottom: '1px solid #333' }}>
@@ -91,12 +91,12 @@ export default function HomePage({ onStart, onLogout, onStartLobby }) {
 
             {/* Why Choose Us */}
             <section style={sectionStyle}>
-                <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>{isHebrew ? 'למה לבחור בנו' : 'Why Choose Us'}</h2>
+                <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', textAlign: 'center' }}>{isHebrew ? 'למה לבחור בנו' : 'Why Choose Us'}</h2>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'center' }}>
                     {[
                         [isHebrew ? 'ניהול שחקנים קל' : 'Easy Player Management', '🧑‍🤝‍🧑'],
                         [isHebrew ? 'היסטוריית משחקים' : 'Game History', '🗂️', onStartLobby],
-                        [isHebrew ? 'חישוב תשלומים הוגן' : 'Fair Settlements', '🎯'],
+                        // [isHebrew ? 'חישוב תשלומים הוגן' : 'Fair Settlements', '🎯'],
                         [isHebrew ? 'גישה מכל מכשיר' : 'Cross-Device Access', '📱💻']
                     ].map(([title, icon, onClick], i) => (
                         <div

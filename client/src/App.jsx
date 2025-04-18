@@ -235,13 +235,13 @@ function App() {
               background: '#1a1a1a',
               padding: '1rem',
               borderRadius: '8px',
-              marginTop: '1rem',
+              marginTop: '2rem',
               color: '#fff',
               boxShadow: '0 0 10px rgba(0,0,0,0.4)',
               overflow: 'hidden'
             }}>
 
-              <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid #444', paddingBottom: '0.5rem' }}>{isHebrew ? 'סיכום המשחק:' : 'Game Summary:'}</h3>
+              <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid #d4af37', paddingBottom: '0.5rem', textAlign:'center', fontSize:'1.5rem' }}>{isHebrew ? 'סיכום המשחק' : 'Game Summary'}</h3>
               <ul style={{
                 listStyleType: 'none',
                 margin: 0,

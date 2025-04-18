@@ -3,7 +3,7 @@ import React from 'react';
 export default function PlayersTable({ players, onAddAmount, onSetCashOut, onEdit, onEndGame, isLocked }) {
     return (
         <div style={{ background: '#1a1a1a', padding: '1rem', borderRadius: '10px', marginTop: '2rem' }}>
-            <h2 style={{ textAlign: 'center', color: '#fff', marginBottom: '1.5rem' }}>טבלת שחקנים</h2>
+            <h2 style={{ textAlign: 'center', color: '#fff', marginBottom: '1.5rem', borderBottom: '1px solid #d4af37', paddingBottom: '0.5rem' }}>טבלת שחקנים</h2>
 
             {players.length > 0 ? (
                 players.map((player, index) => {
