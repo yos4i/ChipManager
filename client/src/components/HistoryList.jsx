@@ -10,7 +10,7 @@ function HistoryList({ history }) {
   }
   
   const boxStyle = {
-    background: 'white',
+    background: 'black',
     padding: '20px',
     borderRadius: '8px',
     boxShadow: '0 0 5px #ccc',

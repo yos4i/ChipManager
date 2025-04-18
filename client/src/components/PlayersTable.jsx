@@ -25,7 +25,8 @@ export default function PlayersTable({ players, onAddAmount, onSetCashOut, onEdi
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center',
-                            color: '#fff'
+                            color: '#fff',
+                            boxShadow: '0 0 10px rgba(0, 0, 0, 0.5)'
                         }}>
                             <div>
                                 <h3 style={{ margin: '0 0 0.5rem' }}>{player.name || '-'}</h3>
@@ -82,8 +83,9 @@ function buttonStyle(color) {
         borderRadius: '6px',
         border: 'none',
         cursor: 'pointer',
-        color: '#fff',
-        fontSize: '1rem'
+        color: '#ffffff',
+        fontSize: '1rem',
+        transition: 'background 0.3s'
     };
 
     switch (color) {

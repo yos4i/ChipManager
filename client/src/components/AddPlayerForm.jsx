@@ -28,7 +28,7 @@ function AddPlayerForm({ onAdd }) {
             onChange={e => setBuyIn(e.target.value)}
             style={inputStyle}
         />
-        <button onClick={handleSubmit} style={buttonStyle}>➕ הוסף שחקן</button>
+        <button onClick={handleSubmit} style={buttonStyle}>הוסף שחקן</button>
       </div>
   );
 }
@@ -40,7 +40,7 @@ const boxStyle = {
   boxShadow: '0 0 10px #000',
   flex: 1,
   minWidth: '300px',
-  color: '#fff',
+  color: '#ffffff',
   marginBottom: '1.5rem'
 };
 

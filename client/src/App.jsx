@@ -18,7 +18,12 @@ import {
   isRoomOwner
 } from './firebase';
 
+import { useLanguage } from './LanguageContext';
+
 function App() {
+  const { lang } = useLanguage();
+  const isHebrew = lang === 'he';
+
   const [uid, setUid] = useState(null);
   const [loading, setLoading] = useState(true);
   const [roomId, setRoomId] = useState(localStorage.getItem('roomId') || '');
@@ -168,7 +173,7 @@ function App() {
 
   if (loading) {
     return (
-        <div style={{ background: '#0e0e0e', height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ background: '#0e0ecd0e', height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <img src="/ChipManagerLogo.png" alt="Loading..." style={{ height: 100 }} />
         </div>
     );
@@ -184,12 +189,13 @@ function App() {
           }}
           onLogout={handleLogout}
           onStartLobby={() => setRoomId("LOBBY")}
+          showLanguageSwitcher={true}
       />
   );
   if (roomId === "LOBBY") return <Lobby onSelectRoom={handleRoomSelect} />;
 
   return (
-      <div style={{ background: '#0e0e0e', color: '#fff', fontFamily: 'sans-serif', minHeight: '100vh', padding: '2rem' }}>
+      <div style={{ background: '#0e0e0e', color: '#fff', fontFamily: 'sans-serif', minHeight: '100vh', padding: '2rem', direction: isHebrew ? 'rtl' : 'ltr', textAlign: isHebrew ? 'right' : 'left' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
           <img src="/ChipManagerLogo.png" alt="Logo" style={{ height: 50 }} />
           <button
@@ -199,15 +205,15 @@ function App() {
               }}
               style={{ background: '#d4af37', color: '#000', padding: '0.5rem 1rem', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
           >
-            🏠 חזרה לעמוד הבית
+            {isHebrew ? 'חזרה לעמוד הבית' : 'Back to Home'}
           </button>
         </div>
 
-        <h1 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>חדר {roomId}</h1>
+        {/*<h1 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>{isHebrew ? 'חדר' : 'Room'} {roomId}</h1>*/}
 
         {isLocked && (
             <div style={{ color: 'red', textAlign: 'center', marginBottom: '1rem' }}>
-              המשחק הסתיים – צפייה בלבד
+              {isHebrew ? 'המשחק הסתיים – צפייה בלבד' : 'Game over – View only'}
             </div>
         )}
 
@@ -225,13 +231,37 @@ function App() {
         <HistoryList history={history} />
 
         {summaryLines.length > 0 && (
-            <div style={{ background: '#1a1a1a', padding: '1rem', borderRadius: '8px', marginTop: '1rem', color: '#fff' }}>
-              <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid #444', paddingBottom: '0.5rem' }}>סיכום המשחק:</h3>
-              <ul style={{ paddingRight: '1rem' }}>
+            <div style={{
+              background: '#1a1a1a',
+              padding: '1rem',
+              borderRadius: '8px',
+              marginTop: '1rem',
+              color: '#fff',
+              boxShadow: '0 0 10px rgba(0,0,0,0.4)',
+              overflow: 'hidden'
+            }}>
+
+              <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid #444', paddingBottom: '0.5rem' }}>{isHebrew ? 'סיכום המשחק:' : 'Game Summary:'}</h3>
+              <ul style={{
+                listStyleType: 'none',
+                margin: 0,
+                padding: 0
+              }}>
                 {summaryLines.map((line, i) => (
-                    <li key={i} style={{ borderBottom: '1px solid #333', padding: '0.5rem 0' }}>{line}</li>
+                    <li key={i} style={{
+                      background: '#111',
+                      border: '1px solid #d4af37',
+                      borderRadius: '8px',
+                      padding: '0.75rem 1rem',
+                      marginBottom: '0.5rem',
+                      color: '#fff',
+                      boxShadow: '0 0 6px rgba(0,0,0,0.3)'
+                    }}>
+                      {line}
+                    </li>
                 ))}
               </ul>
+
             </div>
         )}
       </div>

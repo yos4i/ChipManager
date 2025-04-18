@@ -53,7 +53,7 @@ function Lobby({ onSelectRoom }) {
               onClick={() => onSelectRoom('')}
               style={{ position: 'absolute', left: '2rem', background: '#d4af37', color: '#000', padding: '0.5rem 1rem', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
           >
-            🏠 חזרה לעמוד הבית
+            חזרה לעמוד הבית
           </button>
         </header>
 
