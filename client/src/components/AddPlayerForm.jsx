@@ -40,7 +40,7 @@ const sectionBoxStyle = {
   boxShadow: '0 0 10px rgba(0, 0, 0, 0.5)',
   color: '#ffffff',
   marginBottom: '1.5rem',
-  minWidth: '300px',
+  minWidth: '300px'
 
 };
 
@@ -62,7 +62,8 @@ const inputStyle = {
   border: '1px solid #555',
   background: '#0e0e0e',
   color: '#fff',
-  boxSizing: 'border-box'
+  boxSizing: 'border-box',
+  textAlign: 'center'
 };
 
 const buttonStyle = {

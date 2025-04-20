@@ -33,7 +33,8 @@ const listStyle = {
     maxHeight: '200px',
     overflowY: 'auto',
     padding: 0,
-    listStyle: 'none'
+    listStyle: 'none',
+    textAlign: 'center'
 };
 
 export default HistoryList;

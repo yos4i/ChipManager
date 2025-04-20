@@ -37,7 +37,7 @@ function Lobby({ onSelectRoom }) {
   const roomButtonStyle = (locked) => ({
     padding: '10px 16px',
     fontSize: '15px',
-    background: locked ? '#f44336' : '#2196F3',
+    background: locked ? '#555050' : '#d4af37',
     color: 'white',
     border: 'none',
     borderRadius: '6px',

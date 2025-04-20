@@ -48,7 +48,7 @@ export default function HomePage({ onStart, onLogout, onStartLobby }) {
     };
 
     return (
-        <div style={{ background: '#0e0e0e', color: '#fff', minHeight: '100vh', fontFamily: 'sans-serif', direction: isHebrew ? 'rtl' : 'ltr', textAlign: isHebrew ? 'right' : 'left' }}>
+        <div style={{ background: '#0e0e0e', color: '#fff', minHeight: '100vh', fontFamily: 'sans-serif',  textAlign: 'center' }}>
             {/* Header */}
             <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem' }}>
                 <nav style={{ display: 'flex', gap: '1.5rem' }}>
