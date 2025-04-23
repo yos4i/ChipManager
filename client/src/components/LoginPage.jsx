@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
-import { register, login } from '../firebase';
+import { register, login, doesRoomExist } from '../firebase';
+import { useNavigate } from 'react-router-dom';
 
-export default function Login({ onLogin }) {
+export default function LoginPage({ onLogin }) {
     const [isRegistering, setIsRegistering] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
     const [error, setError] = useState('');
+    const [roomCode, setRoomCode] = useState('');
+    const [guestError, setGuestError] = useState('');
+
+    const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -25,9 +30,39 @@ export default function Login({ onLogin }) {
         }
     };
 
+    const handleGuestJoin = async () => {
+        const code = roomCode.trim().toLowerCase();
+        setGuestError('');
+        if (code.length !== 4) {
+            setGuestError('המזהה חייב להיות באורך 4 תווים');
+            return;
+        }
+        const exists = await doesRoomExist(code);
+        if (!exists) {
+            setGuestError('החדר לא קיים');
+            return;
+        }
+        navigate(`/room/${code}`);
+    };
+
     return (
-        <div style={{ background: '#0e0e0e', color: '#fff', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', fontFamily: 'sans-serif' }}>
-            <form onSubmit={handleSubmit} style={{ background: '#1a1a1a', padding: '2rem', borderRadius: '8px', width: '300px' }}>
+        <div style={{
+            background: '#0e0e0e',
+            color: '#fff',
+            minHeight: '100vh',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            fontFamily: 'sans-serif',
+            flexDirection: 'column',
+            paddingTop: '2rem'
+        }}>
+            <form onSubmit={handleSubmit} style={{
+                background: '#1a1a1a',
+                padding: '2rem',
+                borderRadius: '8px',
+                width: '300px'
+            }}>
                 <h2 style={{ textAlign: 'center', marginBottom: '1rem' }}>{isRegistering ? 'Register' : 'Login'}</h2>
 
                 {isRegistering && (
@@ -75,6 +110,43 @@ export default function Login({ onLogin }) {
           </span>
                 </p>
             </form>
+
+            {/* הצטרפות כצופה */}
+            <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+                <h4>או הצטרף כצופה</h4>
+                <input
+                    type="text"
+                    value={roomCode}
+                    onChange={(e) => setRoomCode(e.target.value)}
+                    placeholder="קוד חדר (4 תווים)"
+                    maxLength={4}
+                    style={{
+                        padding: '0.5rem',
+                        borderRadius: '6px',
+                        width: '200px',
+                        textAlign: 'center',
+                        fontSize: '1rem',
+                        border: '1px solid #888'
+                    }}
+                />
+                <br />
+                <button
+                    onClick={handleGuestJoin}
+                    style={{
+                        marginTop: '0.5rem',
+                        background: '#d4af37',
+                        color: '#000',
+                        padding: '0.5rem 1rem',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold'
+                    }}
+                >
+                    הצטרף לחדר
+                </button>
+                {guestError && <p style={{ color: 'red' }}>{guestError}</p>}
+            </div>
         </div>
     );
 }

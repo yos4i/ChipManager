@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase';
 
-import Login from './components/Login';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import LoginPage from './components/LoginPage.jsx';
 import HomePage from './components/HomePage';
-import Lobby from './components/Lobby';
+import HistoryPage from './components/HistoryPage.jsx';
 import AddPlayerForm from "./components/AddPlayerForm";
-import PlayersTable from "./components/PlayersTable";
+import RoomPage from "./components/RoomPage.jsx";
 import HistoryList from "./components/HistoryList";
 
 import {
@@ -21,6 +22,11 @@ import {
 import { useLanguage } from './LanguageContext';
 
 function App() {
+  <Routes>
+    <Route path="/" element={<HomePage />} />
+    <Route path="/login" element={<LoginPage />} />
+    <Route path="/room/:roomId" element={<RoomPage />} />
+  </Routes>
   const { lang } = useLanguage();
   const isHebrew = lang === 'he';
 
@@ -179,7 +185,10 @@ function App() {
     );
   }
 
-  if (!uid) return <Login onLogin={(id) => setUid(id)} />;
+  if (!uid && !window.location.pathname.startsWith('/room/')) {
+    return <LoginPage onLogin={(uid) => setUid(uid)} />;
+  }
+
   if (!roomId) return (
       <HomePage
           onStart={async () => {
@@ -192,7 +201,7 @@ function App() {
           showLanguageSwitcher={true}
       />
   );
-  if (roomId === "LOBBY") return <Lobby onSelectRoom={handleRoomSelect} />;
+  if (roomId === "LOBBY") return <HistoryPage onSelectRoom={handleRoomSelect} />;
 
   return (
       <div style={{ background: '#0e0e0e', color: '#fff', fontFamily: 'sans-serif', minHeight: '100vh', padding: '2rem', direction: isHebrew ? 'rtl' : 'ltr', textAlign: 'center' }}>
@@ -219,7 +228,7 @@ function App() {
 
         {isOwner && !isLocked && <AddPlayerForm onAdd={handleAddPlayer} />}
 
-        <PlayersTable
+        <RoomPage
             players={players}
             onAddAmount={addAmount}
             onSetCashOut={setCashOut}

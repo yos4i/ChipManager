@@ -1,12 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLanguage } from '../LanguageContext';
-import { auth, database, ref, get } from '../firebase';
+import { auth, database, ref, get, doesRoomExist } from '../firebase';
+import { useNavigate } from 'react-router-dom';
 
 export default function HomePage({ onStart, onLogout, onStartLobby }) {
     const { lang, toggleLanguage } = useLanguage();
     const isHebrew = lang === 'he';
 
     const [recentRooms, setRecentRooms] = useState([]);
+    const [roomCode, setRoomCode] = useState('');
+    const [guestError, setGuestError] = useState('');
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         const uid = auth.currentUser?.uid;
@@ -47,12 +52,31 @@ export default function HomePage({ onStart, onLogout, onStartLobby }) {
         padding: '2rem 1rem'
     };
 
+    const handleGuestJoin = async () => {
+        const code = roomCode.trim().toLowerCase();
+        setGuestError('');
+        if (code.length !== 4) {
+            setGuestError('המזהה חייב להיות באורך 4 תווים');
+            return;
+        }
+
+        const exists = await doesRoomExist(code);
+        if (!exists) {
+            setGuestError('החדר לא קיים');
+            return;
+        }
+
+        navigate(`/room/${code}`);
+    };
+
     return (
-        <div style={{ background: '#0e0e0e', color: '#fff', minHeight: '100vh', fontFamily: 'sans-serif',  textAlign: 'center' }}>
+        <div style={{ background: '#0e0e0e', color: '#fff', minHeight: '100vh', fontFamily: 'sans-serif', textAlign: 'center' }}>
             {/* Header */}
             <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem' }}>
                 <nav style={{ display: 'flex', gap: '1.5rem' }}>
-                    <button onClick={onLogout} style={{ background: '#f44336', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer' }}>{isHebrew ? 'התנתק' : 'Logout'}</button>
+                    <button onClick={onLogout} style={{ background: '#f44336', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer' }}>
+                        {isHebrew ? 'התנתק' : 'Logout'}
+                    </button>
                     <button
                         onClick={toggleLanguage}
                         style={{ padding: '0.5rem 1rem', background: '#333', color: '#fff', border: '1px solid #888', borderRadius: '6px', cursor: 'pointer' }}>
@@ -64,7 +88,7 @@ export default function HomePage({ onStart, onLogout, onStartLobby }) {
             {/* Hero Section */}
             <section style={{ ...sectionStyle, textAlign: 'center' }}>
                 <div style={{ marginBottom: '2rem' }}>
-                    <img src="/ChipManagerLogo.png" alt="ChipManager Logo" style={{ height: 100 }} />
+                    <img src="/Mylogo.png" alt="ChipManager Logo" style={{ height: 100 }} />
                 </div>
                 <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>{isHebrew ? 'נהל את ערבי הפוקר שלך כמו מקצוען' : 'Manage Your Poker Nights Like a Pro'}</h1>
                 <p style={{ color: '#ccc', fontSize: '1.1rem', marginBottom: '2rem' }}>
@@ -77,16 +101,65 @@ export default function HomePage({ onStart, onLogout, onStartLobby }) {
             <section style={sectionStyle}>
                 <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', textAlign: 'center' }}>{isHebrew ? 'המשחקים האחרונים שלך' : 'Your Recent Games'}</h2>
                 <div style={{ background: '#1a1a1a', borderRadius: '10px', overflow: 'hidden' }}>
-                    {recentRooms.slice(0, 4).map((room, idx) => (
-                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', borderBottom: '1px solid #333' }}>
+                    {recentRooms.length > 0 ? recentRooms.map((room, idx) => (
+                        <div
+                            key={idx}
+                            onClick={() => navigate(`/room/${room.id}`)}
+                            style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                padding: '1rem',
+                                borderBottom: '1px solid #333',
+                                cursor: 'pointer',
+                                transition: 'background 0.2s'
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = '#2a2a2a')}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = '#1a1a1a')}
+                        >
                             <span>{room.displayName}</span>
                             <span style={{ color: '#aaa' }}>{room.locked ? (isHebrew ? 'נעול' : 'Locked') : (isHebrew ? 'פתוח' : 'Open')}</span>
                         </div>
-                    ))}
-                    {recentRooms.length === 0 && (
+                    )) : (
                         <div style={{ padding: '1rem', textAlign: 'center', color: '#888' }}>{isHebrew ? 'אין משחקים אחרונים' : 'No recent games found'}</div>
                     )}
                 </div>
+            </section>
+
+            {/* Guest Join */}
+            <section style={{ ...sectionStyle, marginTop: '1rem', textAlign: 'center' }}>
+                <h3 style={{ marginBottom: '0.5rem' }}>{isHebrew ? 'הצטרף לצפייה בחדר קיים' : 'Join an Existing Room as Guest'}</h3>
+                <input
+                    type="text"
+                    value={roomCode}
+                    onChange={(e) => setRoomCode(e.target.value)}
+                    maxLength={4}
+                    placeholder={isHebrew ? 'קוד חדר (4 תווים)' : 'Room code (4 chars)'}
+                    style={{
+                        padding: '0.5rem',
+                        borderRadius: '6px',
+                        width: '200px',
+                        textAlign: 'center',
+                        fontSize: '1rem',
+                        border: '1px solid #888'
+                    }}
+                />
+                <br />
+                <button
+                    onClick={handleGuestJoin}
+                    style={{
+                        marginTop: '0.5rem',
+                        background: '#d4af37',
+                        color: '#000',
+                        padding: '0.5rem 1rem',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold'
+                    }}
+                >
+                    {isHebrew ? 'הצטרף לחדר' : 'Join Room'}
+                </button>
+                {guestError && <p style={{ color: 'red' }}>{guestError}</p>}
             </section>
 
             {/* Why Choose Us */}
@@ -94,9 +167,8 @@ export default function HomePage({ onStart, onLogout, onStartLobby }) {
                 <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', textAlign: 'center' }}>{isHebrew ? 'למה לבחור בנו' : 'Why Choose Us'}</h2>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'center' }}>
                     {[
+                        [isHebrew ? 'היסטוריית משחקים מלאה' : 'Full Game History', '🗂️', onStartLobby],
                         [isHebrew ? 'ניהול שחקנים קל' : 'Easy Player Management', '🧑‍🤝‍🧑'],
-                        [isHebrew ? 'היסטוריית משחקים' : 'Game History', '🗂️', onStartLobby],
-                        // [isHebrew ? 'חישוב תשלומים הוגן' : 'Fair Settlements', '🎯'],
                         [isHebrew ? 'גישה מכל מכשיר' : 'Cross-Device Access', '📱💻']
                     ].map(([title, icon, onClick], i) => (
                         <div

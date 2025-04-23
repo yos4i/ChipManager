@@ -1,18 +1,19 @@
+// PlayersTable.jsx
 import React from 'react';
 
 export default function PlayersTable({ players, onAddAmount, onSetCashOut, onEdit, onEndGame, isLocked }) {
     return (
         <div style={{ background: '#1a1a1a', padding: '1rem', borderRadius: '10px', marginTop: '2rem' }}>
-            <h2 style={{ textAlign: 'center', color: '#fff', marginBottom: '1.5rem', borderBottom: '1px solid #d4af37', paddingBottom: '0.5rem' }}>טבלת שחקנים</h2>
+            <h2 style={{ textAlign: 'center', color: '#fff', marginBottom: '1.5rem', borderBottom: '1px solid #d4af37', paddingBottom: '0.5rem' }}>
+                טבלת שחקנים
+            </h2>
 
             {players.length > 0 ? (
                 players.map((player, index) => {
                     const buyIn = Number(player.buyIn);
                     const cashOut = player.cashOut;
-
                     const isCashOutDefined = typeof cashOut === 'number' && !isNaN(cashOut);
                     const isBuyInValid = typeof buyIn === 'number' && !isNaN(buyIn);
-
                     const profit = isCashOutDefined && isBuyInValid ? cashOut - buyIn : null;
 
                     return (
@@ -23,10 +24,12 @@ export default function PlayersTable({ players, onAddAmount, onSetCashOut, onEdi
                             padding: '1rem',
                             marginBottom: '1rem',
                             display: 'flex',
-                            justifyContent: 'space-between',
+                            justifyContent: 'space-evenly',
                             alignItems: 'center',
+                            textAlign: 'center',
                             color: '#fff',
-                            boxShadow: '0 0 10px rgba(0, 0, 0, 0.5)'
+                            boxShadow: '0 0 10px rgba(0, 0, 0, 0.5)',
+                            direction:'rtl'
                         }}>
                             <div>
                                 <h3 style={{ margin: '0 0 0.5rem' }}>{player.name || '-'}</h3>
@@ -42,7 +45,7 @@ export default function PlayersTable({ players, onAddAmount, onSetCashOut, onEdi
                             </div>
 
                             {!isLocked && (
-                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <div style={{ display: 'flex', gap: '0.5rem'}}>
                                     <button onClick={() => onAddAmount(index)} style={buttonStyle('blue')}>💵</button>
                                     <button onClick={() => onSetCashOut(index)} style={buttonStyle('green')}>🏁</button>
                                     <button onClick={() => onEdit(index)} style={buttonStyle('gray')}>✏️</button>

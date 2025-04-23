@@ -1,4 +1,3 @@
-// firebase.js - כולל יצירת חדר + משתמשים בסיסיים
 import { initializeApp } from "firebase/app";
 import {
   getDatabase,
@@ -31,19 +30,35 @@ const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const auth = getAuth(app);
 
-// פונקציה ליצירת מזהה ייחודי
-function generateUniqueId() {
-  return Math.random().toString(36).substring(2) + Date.now().toString(36);
+//
+// 🔤 יצירת מזהה חדר רנדומלי (4 תווים מ־a-z ו־0-9)
+//
+function generateRoomId(length = 4) {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return result;
 }
 
-// יצירת חדר חדש עם createdAt
+//
+// 🆕 יצירת חדר חדש עם מזהה קצר ותאריך יצירה
+//
 async function createRoom() {
+  let roomId = generateRoomId();
+  const ownerId = auth.currentUser?.uid;
   const now = new Date();
   const createdAt = now.toLocaleString("he-IL", {
     day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
   });
-  const roomId = `${now.getFullYear()}_${now.getMonth() + 1}_${now.getDate()}  -  ${now.getHours()}:${now.getMinutes()}`;
-  const ownerId = auth.currentUser?.uid;
+
+  // ודא שהמזהה לא תפוס כבר
+  const existing = await get(ref(database, `rooms/${roomId}`));
+  if (existing.exists()) {
+    return createRoom(); // אם קיים – צור חדש
+  }
+
   localStorage.setItem("ownerId", ownerId);
 
   await set(ref(database, `rooms/${roomId}`), {
@@ -58,7 +73,9 @@ async function createRoom() {
   return roomId;
 }
 
-// בדיקה האם המשתמש הנוכחי הוא בעל החדר
+//
+// ✅ בדיקה אם המשתמש הוא בעל החדר
+//
 async function isRoomOwner(roomId) {
   const currentUserId = localStorage.getItem("ownerId");
   const roomSnapshot = await get(ref(database, `rooms/${roomId}`));
@@ -67,17 +84,31 @@ async function isRoomOwner(roomId) {
   return roomData.ownerId === currentUserId;
 }
 
-// מחיקת חדר
-async function deleteRoom(roomId) {
-  await remove(ref(database, `rooms/${roomId}`));
+//
+// ❓ בדיקה אם חדר קיים לפי מזהה (לצורך כניסת אורח)
+//
+async function doesRoomExist(roomId) {
+  const roomSnapshot = await get(ref(database, `rooms/${roomId}`));
+  return roomSnapshot.exists();
 }
 
-// ניקוי שחקנים
+//
+// 🧹 ניקוי שחקנים מחדר
+//
 async function clearRoomPlayers(roomId) {
   await set(ref(database, `rooms/${roomId}/players`), []);
 }
 
-// הרשמה עם אימייל + סיסמה
+//
+// ❌ מחיקת חדר
+//
+async function deleteRoom(roomId) {
+  await remove(ref(database, `rooms/${roomId}`));
+}
+
+//
+// 👤 הרשמה עם אימייל + סיסמה
+//
 async function register(email, password, displayName) {
   const result = await createUserWithEmailAndPassword(auth, email, password);
   const user = result.user;
@@ -90,13 +121,17 @@ async function register(email, password, displayName) {
   return user;
 }
 
-// התחברות עם אימייל + סיסמה
+//
+// 🔐 התחברות עם אימייל + סיסמה
+//
 async function login(email, password) {
   const result = await signInWithEmailAndPassword(auth, email, password);
   return result.user;
 }
 
-// הפניה ישירה לנתיב משתמש
+//
+// 🔗 גישה ישירה למשתמש
+//
 function getUserRef(uid) {
   return ref(database, `users/${uid}`);
 }
@@ -112,9 +147,10 @@ export {
   auth,
   createRoom,
   isRoomOwner,
+  doesRoomExist,
   deleteRoom,
   clearRoomPlayers,
-  generateUniqueId,
+  generateRoomId,
   register,
   login,
   getUserRef
