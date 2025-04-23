@@ -44,7 +44,11 @@ function HistoryPage({ onSelectRoom }) {
         border: 'none',
         borderRadius: '6px',
         cursor: 'pointer',
-        width: '100%'
+        width: '100%',
+        maxWidth: '400px',
+        margin: '0 auto',
+        display: 'flex',
+
     });
 
     return (
@@ -58,20 +62,30 @@ function HistoryPage({ onSelectRoom }) {
                         left: '2rem',
                         background: '#d4af37',
                         color: '#000',
-                        padding: '0.5rem 1rem',
+                        padding: '0.5rem 0.3rem',
                         border: 'none',
                         borderRadius: '6px',
-                        cursor: 'pointer'
+                        cursor: 'pointer',
+                        width: '100%',
+                        maxWidth: '85px'
                     }}
                 >
                     חזרה לעמוד הבית
                 </button>
             </header>
 
-            <ul style={{ listStyle: 'none', padding: 0, maxWidth: '600px', margin: '0 auto' }}>
+            <ul style={{ listStyle: 'none', padding: 0, maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
                 {rooms.map((room) => (
-                    <li key={room.id} style={{ margin: '0.5rem 0' }}>
-                        <button onClick={() => onSelectRoom(room.id)} style={roomButtonStyle(room.locked)}>
+                    <li key={room.id} style={{ margin: '0.5rem 0', textAlign: 'center' }}>
+                        <button
+                            onClick={() => onSelectRoom(room.id)}
+                            style={{
+                                ...roomButtonStyle(room.locked),
+                                textAlign: 'center',
+                                direction: 'rtl', // כדי שהטקסט בעברית יהיה תקין
+                                display: 'inline-block' // חשוב כדי שיתמרכז בתוך ה-li עם textAlign: center
+                            }}
+                        >
                             {room.displayName} {room.locked ? '(נעול - צפייה בלבד)' : ''}
                         </button>
                     </li>

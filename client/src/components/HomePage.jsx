@@ -100,7 +100,7 @@ export default function HomePage({ onStart, onLogout, onStartLobby }) {
             {/* Recent Games */}
             <section style={sectionStyle}>
                 <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', textAlign: 'center' }}>{isHebrew ? 'המשחקים האחרונים שלך' : 'Your Recent Games'}</h2>
-                <div style={{ background: '#1a1a1a', borderRadius: '10px', overflow: 'hidden' }}>
+                <div style={{ background: '#1a1a1a', borderRadius: '10px', overflow: 'hidden',  width: '100%', maxWidth: '600px', margin: '0 auto' }}>
                     {recentRooms.length > 0 ? recentRooms.map((room, idx) => (
                         <div
                             key={idx}
@@ -111,7 +111,8 @@ export default function HomePage({ onStart, onLogout, onStartLobby }) {
                                 padding: '1rem',
                                 borderBottom: '1px solid #333',
                                 cursor: 'pointer',
-                                transition: 'background 0.2s'
+                                transition: 'background 0.2s',
+
                             }}
                             onMouseEnter={(e) => (e.currentTarget.style.background = '#2a2a2a')}
                             onMouseLeave={(e) => (e.currentTarget.style.background = '#1a1a1a')}
