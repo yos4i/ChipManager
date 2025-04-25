@@ -71,7 +71,7 @@ const buttonStyle = {
   padding: '12px',
   marginTop: '15px',
   width: '100%',
-  background: '#4285f4',
+  background: '#d4af37',
   color: '#fff',
   border: 'none',
   borderRadius: '6px',

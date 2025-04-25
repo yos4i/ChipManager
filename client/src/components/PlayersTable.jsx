@@ -93,7 +93,7 @@ function buttonStyle(color) {
 
     switch (color) {
         case 'green': return { ...base, background: '#4CAF50' };
-        case 'blue': return { ...base, background: '#2196F3' };
+        case 'blue': return { ...base, background: '#d4af37' };
         case 'gray': return { ...base, background: '#555' };
         default: return base;
     }

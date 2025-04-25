@@ -77,7 +77,7 @@ async function createRoom() {
 // ✅ בדיקה אם המשתמש הוא בעל החדר
 //
 async function isRoomOwner(roomId) {
-  const currentUserId = localStorage.getItem("ownerId");
+  const currentUserId = auth.currentUser?.uid;
   const roomSnapshot = await get(ref(database, `rooms/${roomId}`));
   if (!roomSnapshot.exists()) return false;
   const roomData = roomSnapshot.val();

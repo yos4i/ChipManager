@@ -14,25 +14,28 @@ export default function HomePage({ onStart, onLogout, onStartLobby }) {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const uid = auth.currentUser?.uid;
-        if (!uid) return;
-
-        const roomsRef = ref(database, 'rooms');
-        get(roomsRef).then(snapshot => {
-            if (snapshot.exists()) {
-                const data = snapshot.val();
-                const userRooms = Object.entries(data)
-                    .filter(([_, room]) => room.ownerId === uid)
-                    .map(([roomId, roomData]) => ({
-                        id: roomId,
-                        displayName: roomData.createdAt || roomId,
-                        locked: roomData.locked || false,
-                    }))
-                    .sort((a, b) => b.displayName.localeCompare(a.displayName))
-                    .slice(0, 4);
-                setRecentRooms(userRooms);
+        const unsubscribe = auth.onAuthStateChanged((user) => {
+            if (user) {
+                const uid = user.uid;
+                const roomsRef = ref(database, 'rooms');
+                get(roomsRef).then(snapshot => {
+                    if (snapshot.exists()) {
+                        const data = snapshot.val();
+                        const userRooms = Object.entries(data)
+                            .filter(([_, room]) => room.ownerId === uid)
+                            .map(([roomId, roomData]) => ({
+                                id: roomId,
+                                displayName: roomData.createdAt || roomId,
+                                locked: roomData.locked || false,
+                            }))
+                            .sort((a, b) => b.displayName.localeCompare(a.displayName))
+                            .slice(0, 4);
+                        setRecentRooms(userRooms);
+                    }
+                });
             }
         });
+        return () => unsubscribe();
     }, []);
 
     const btnStyle = {
@@ -70,16 +73,42 @@ export default function HomePage({ onStart, onLogout, onStartLobby }) {
     };
 
     return (
-        <div style={{ background: '#0e0e0e', color: '#fff', minHeight: '100vh', fontFamily: 'sans-serif', textAlign: 'center' }}>
+        <div style={{
+            background: '#0e0e0e',
+            color: '#fff',
+            minHeight: '100vh',
+            fontFamily: 'sans-serif',
+            textAlign: 'center'
+        }}>
             {/* Header */}
-            <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem' }}>
+            <header style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '1rem 2rem'
+            }}>
                 <nav style={{ display: 'flex', gap: '1.5rem' }}>
-                    <button onClick={onLogout} style={{ background: '#f44336', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer' }}>
+                    <button onClick={onLogout} style={{
+                        background: '#f44336',
+                        color: '#fff',
+                        border: 'none',
+                        padding: '0.5rem 1rem',
+                        borderRadius: '6px',
+                        cursor: 'pointer'
+                    }}>
                         {isHebrew ? 'התנתק' : 'Logout'}
                     </button>
                     <button
                         onClick={toggleLanguage}
-                        style={{ padding: '0.5rem 1rem', background: '#333', color: '#fff', border: '1px solid #888', borderRadius: '6px', cursor: 'pointer' }}>
+                        style={{
+                            padding: '0.5rem 1rem',
+                            background: '#333',
+                            color: '#fff',
+                            border: '1px solid #888',
+                            borderRadius: '6px',
+                            cursor: 'pointer'
+                        }}
+                    >
                         {lang === 'he' ? 'English' : 'עברית'}
                     </button>
                 </nav>
@@ -90,17 +119,36 @@ export default function HomePage({ onStart, onLogout, onStartLobby }) {
                 <div style={{ marginBottom: '2rem' }}>
                     <img src="/Mylogo.png" alt="ChipManager Logo" style={{ height: 100 }} />
                 </div>
-                <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>{isHebrew ? 'נהל את ערבי הפוקר שלך כמו מקצוען' : 'Manage Your Poker Nights Like a Pro'}</h1>
+                <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>
+                    {isHebrew ? 'נהל את ערבי הפוקר שלך כמו מקצוען' : 'Manage Your Poker Nights Like a Pro'}
+                </h1>
                 <p style={{ color: '#ccc', fontSize: '1.1rem', marginBottom: '2rem' }}>
-                    {isHebrew ? 'שלוט במשחקים הביתיים שלך — נהל כניסות, יתרות וסטטיסטיקות שחקנים במקום אחד' : 'Take control of your home games — track buy-ins, balances, and player stats, all in one place.'}
+                    {isHebrew
+                        ? 'שלוט במשחקים הביתיים שלך — נהל כניסות, יתרות וסטטיסטיקות שחקנים במקום אחד'
+                        : 'Take control of your home games — track buy-ins, balances, and player stats, all in one place.'}
                 </p>
-                <button style={btnStyle} onClick={onStart}>{isHebrew ? 'התחל משחק' : 'Start a Game'}</button>
+                <button style={btnStyle} onClick={onStart}>
+                    {isHebrew ? 'התחל משחק' : 'Start a Game'}
+                </button>
             </section>
 
             {/* Recent Games */}
             <section style={sectionStyle}>
-                <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', textAlign: 'center' }}>{isHebrew ? 'המשחקים האחרונים שלך' : 'Your Recent Games'}</h2>
-                <div style={{ background: '#1a1a1a', borderRadius: '10px', overflow: 'hidden',  width: '100%', maxWidth: '600px', margin: '0 auto' }}>
+                <h2 style={{
+                    fontSize: '1.5rem',
+                    marginBottom: '1rem',
+                    textAlign: 'center'
+                }}>
+                    {isHebrew ? 'המשחקים האחרונים שלך' : 'Your Recent Games'}
+                </h2>
+                <div style={{
+                    background: '#1a1a1a',
+                    borderRadius: '10px',
+                    overflow: 'hidden',
+                    width: '100%',
+                    maxWidth: '600px',
+                    margin: '0 auto'
+                }}>
                     {recentRooms.length > 0 ? recentRooms.map((room, idx) => (
                         <div
                             key={idx}
@@ -112,23 +160,45 @@ export default function HomePage({ onStart, onLogout, onStartLobby }) {
                                 borderBottom: '1px solid #333',
                                 cursor: 'pointer',
                                 transition: 'background 0.2s',
-
+                                direction: 'rtl',
+                                textAlign: 'right'
                             }}
                             onMouseEnter={(e) => (e.currentTarget.style.background = '#2a2a2a')}
                             onMouseLeave={(e) => (e.currentTarget.style.background = '#1a1a1a')}
                         >
-                            <span>{room.displayName}</span>
-                            <span style={{ color: '#aaa' }}>{room.locked ? (isHebrew ? 'נעול' : 'Locked') : (isHebrew ? 'פתוח' : 'Open')}</span>
+              <span style={{ flex: 1, color: '#ccc', fontSize: '1rem' }}>
+                {isHebrew ? `מזהה חדר: ${room.id}` : `Room ID: ${room.id}`}
+              </span>
+                            <span style={{
+                                flex: 1,
+                                textAlign: 'center',
+                                color: '#ccc',
+                                fontSize: '1rem'
+                            }}>
+                {room.displayName}
+              </span>
+                            <span style={{
+                                flex: 1,
+                                textAlign: 'left',
+                                color: '#ccc',
+                                fontSize: '1rem'
+                            }}>
+                {room.locked ? (isHebrew ? 'נעול' : 'Locked') : (isHebrew ? 'פתוח' : 'Open')}
+              </span>
                         </div>
                     )) : (
-                        <div style={{ padding: '1rem', textAlign: 'center', color: '#888' }}>{isHebrew ? 'אין משחקים אחרונים' : 'No recent games found'}</div>
+                        <div style={{ padding: '1rem', textAlign: 'center', color: '#888' }}>
+                            {isHebrew ? 'אין משחקים אחרונים' : 'No recent games found'}
+                        </div>
                     )}
                 </div>
             </section>
 
             {/* Guest Join */}
             <section style={{ ...sectionStyle, marginTop: '1rem', textAlign: 'center' }}>
-                <h3 style={{ marginBottom: '0.5rem' }}>{isHebrew ? 'הצטרף לצפייה בחדר קיים' : 'Join an Existing Room as Guest'}</h3>
+                <h3 style={{ marginBottom: '0.5rem' }}>
+                    {isHebrew ? 'הצטרף לצפייה בחדר קיים' : 'Join an Existing Room as Guest'}
+                </h3>
                 <input
                     type="text"
                     value={roomCode}
@@ -165,8 +235,19 @@ export default function HomePage({ onStart, onLogout, onStartLobby }) {
 
             {/* Why Choose Us */}
             <section style={sectionStyle}>
-                <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', textAlign: 'center' }}>{isHebrew ? 'למה לבחור בנו' : 'Why Choose Us'}</h2>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'center' }}>
+                <h2 style={{
+                    fontSize: '1.5rem',
+                    marginBottom: '1rem',
+                    textAlign: 'center'
+                }}>
+                    {isHebrew ? 'למה לבחור בנו' : 'Why Choose Us'}
+                </h2>
+                <div style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '1rem',
+                    justifyContent: 'center'
+                }}>
                     {[
                         [isHebrew ? 'היסטוריית משחקים מלאה' : 'Full Game History', '🗂️', onStartLobby],
                         [isHebrew ? 'ניהול שחקנים קל' : 'Easy Player Management', '🧑‍🤝‍🧑'],
