@@ -41,7 +41,7 @@ export default function AppRoutes() {
                 justifyContent: 'center',
                 alignItems: 'center'
             }}>
-                <img src="/ChipManagerLogo.png" alt="Loading..." style={{ height: 100 }} />
+                <img src="/Mylogo.png" alt="Loading..." style={{ height: 100 }} />
             </div>
         );
     }

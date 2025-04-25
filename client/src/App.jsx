@@ -180,7 +180,7 @@ function App() {
   if (loading) {
     return (
         <div style={{ background: '#0e0ecd0e', height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <img src="/ChipManagerLogo.png" alt="Loading..." style={{ height: 100 }} />
+          <img src="/Mylogo.png" alt="Loading..." style={{ height: 100 }} />
         </div>
     );
   }
@@ -206,7 +206,7 @@ function App() {
   return (
       <div style={{ background: '#0e0e0e', color: '#fff', fontFamily: 'sans-serif', minHeight: '100vh', padding: '2rem', direction: isHebrew ? 'rtl' : 'ltr', textAlign: 'center' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <img src="/ChipManagerLogo.png" alt="Logo" style={{ height: 50 }} />
+          <img src="/Mylogo.png.png" alt="Logo" style={{ height: 50 }} />
           <button
               onClick={() => {
                 localStorage.removeItem('roomId');
