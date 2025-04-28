@@ -4,7 +4,6 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 
 const defaultStages = [
-    { break: true, duration: 5 },
 ];
 
 export default function TournamentPage() {
@@ -17,6 +16,9 @@ export default function TournamentPage() {
     });
     const countdownSound = new Audio('/countdown.mp3');
     const [countdownPlayed, setCountdownPlayed] = useState(false);
+    const [speechAllowed, setSpeechAllowed] = useState(false);
+    const [tournamentStarted, setTournamentStarted] = useState(false);
+    const [voices, setVoices] = useState([]);
 
     const [players, setPlayers] = useState([]);
     const [currentStageIndex, setCurrentStageIndex] = useState(0);
@@ -32,15 +34,45 @@ export default function TournamentPage() {
 
     const currentStage = stages[currentStageIndex];
     const speak = (text) => {
-        speechSynthesis.cancel(); // לעצור קריינות קודמת
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'he-IL'; // עברית
-        utterance.rate = 0.8; // מהירות דיבור
-        speechSynthesis.speak(utterance);
+        if (!speechAllowed || !text) return;
+
+        window.speechSynthesis.cancel(); // 🛑 עוצר כל קריאה קודמת לפני שמדברים
+        const utterance = new SpeechSynthesisUtterance();
+        utterance.lang = 'he-IL';
+        utterance.text = text;
+
+        const hebrewVoice = voices.find(v => v.lang.includes('he') || v.lang.includes('iw'));
+
+        if (hebrewVoice) {
+            utterance.voice = hebrewVoice;
+            window.speechSynthesis.speak(utterance);
+        } else {
+            console.log('לא נמצא קול בעברית במכשיר');
+        }
+    };
+
+
+
+    const startTournament = () => {
+        if (players.length === 0) {
+            setMessage('❌ יש להוסיף שחקנים לפני התחלת הטורניר');
+            return;
+        }
+        if (stages.length === 0) {
+            setMessage('❌ יש להוסיף שלבים לפני התחלת הטורניר');
+            return;
+        }
+
+        setSpeechAllowed(true); // מרשה לדבר
+        setTournamentStarted(true); // מתחיל את הטורניר
+        setIsPaused(false); // מפעיל את הטיימר
+        setMessage('✅ הטורניר התחיל! בהצלחה לכולם');
     };
 
 
     useEffect(() => {
+        if (!tournamentStarted) return; // 🛑 לא להתחיל לספור אם לא התחיל טורניר
+
         const interval = setInterval(() => {
             setTotalSecondsPassed(prev => prev + 1);
             if (!isPaused) {
@@ -59,7 +91,21 @@ export default function TournamentPage() {
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [isPaused, currentStageIndex, countdownPlayed, stages]);
+    }, [tournamentStarted, isPaused, currentStageIndex, countdownPlayed, stages]);
+
+    useEffect(() => {
+        const handleVoicesChanged = () => {
+            const availableVoices = window.speechSynthesis.getVoices();
+            setVoices(availableVoices);
+        };
+
+        window.speechSynthesis.addEventListener('voiceschanged', handleVoicesChanged);
+        handleVoicesChanged(); // גם מפעיל מיידית ליתר ביטחון
+
+        return () => {
+            window.speechSynthesis.removeEventListener('voiceschanged', handleVoicesChanged);
+        };
+    }, []);
 
     useEffect(() => {
         localStorage.setItem('tournamentTemplate', JSON.stringify(stages));
@@ -212,6 +258,23 @@ export default function TournamentPage() {
             >
                 חזרה לעמוד הבית
             </button>
+            {!tournamentStarted && (
+                <button
+                    onClick={startTournament}
+                    style={{
+                        background: '#d4af37',
+                        color: '#000',
+                        border: 'none',
+                        padding: '0.5rem 1rem',
+                        borderRadius: '8px',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        marginBottom: '2rem'
+                    }}
+                >
+                    התחל טורניר
+                </button>
+            )}
 
 
 
