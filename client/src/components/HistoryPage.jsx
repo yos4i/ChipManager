@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { database, ref, onValue } from '../firebase';
+import { database, ref, get } from '../firebase';
 import { auth } from '../firebase';
 
-function HistoryPage({ onSelectRoom }) {
+function HistoryPage() {
     const [rooms, setRooms] = useState([]);
     const [uid, setUid] = useState('');
     const navigate = useNavigate();
@@ -16,24 +16,43 @@ function HistoryPage({ onSelectRoom }) {
     }, []);
 
     useEffect(() => {
-        const roomsRef = ref(database, 'rooms');
-        onValue(roomsRef, (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                const userRooms = Object.entries(data)
-                    .filter(([_, roomData]) => roomData.ownerId === uid)
-                    .map(([roomId, roomData]) => ({
-                        id: roomId,
-                        locked: roomData.locked || false,
-                        createdAt: roomData.createdAt || '',
-                        displayName: roomData.createdAt ? ` ${roomData.createdAt}` : roomId
-                    }))
-                    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-                setRooms(userRooms);
-            } else {
-                setRooms([]);
-            }
-        });
+        if (!uid) return;
+
+        async function fetchRoomsAndTournaments() {
+            const roomsSnapshot = await get(ref(database, 'rooms'));
+            const tournamentsSnapshot = await get(ref(database, 'tournaments'));
+
+            const roomsData = roomsSnapshot.val() || {};
+            const tournamentsData = tournamentsSnapshot.val() || {};
+
+            const allRooms = [
+                ...Object.entries(roomsData).map(([id, room]) => ({
+                    id,
+                    ...room,
+                    type: 'cash'
+                })),
+                ...Object.entries(tournamentsData).map(([id, tournament]) => ({
+                    id,
+                    ...tournament,
+                    type: 'tournament'
+                }))
+            ];
+
+            const userRooms = allRooms
+                .filter(room => room.ownerId === uid)
+                .map(room => ({
+                    id: room.id,
+                    locked: room.locked || false,
+                    createdAt: room.createdAt || '',
+                    displayName: room.createdAt ? ` ${room.createdAt}` : room.id,
+                    type: room.type || 'cash'
+                }))
+                .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
+            setRooms(userRooms);
+        }
+
+        fetchRoomsAndTournaments();
     }, [uid]);
 
     const roomButtonStyle = (locked) => ({
@@ -69,34 +88,41 @@ function HistoryPage({ onSelectRoom }) {
         cursor: 'pointer'
     };
 
+    const handleSelectRoom = (id, type) => {
+        if (type === 'tournament') {
+            navigate(`/tournament/${id}`);
+        } else {
+            navigate(`/room/${id}`);
+        }
+    };
+
     return (
-        <div
-            style={{
-                background: '#0e0e0e',
-                color: '#fff',
-                minHeight: '100vh',
-                fontFamily: 'sans-serif',
-                padding: '2rem'
-            }}
-        >
+        <div style={{
+            background: '#0e0e0e',
+            color: '#fff',
+            minHeight: '100vh',
+            fontFamily: 'sans-serif',
+            padding: '2rem'
+        }}>
             <h2 style={{ textAlign: 'center', marginBottom: '1rem' }}>היסטוריית המשחקים שלך</h2>
 
             <button onClick={() => navigate('/')} style={backButtonStyle}>
                 חזרה לעמוד הבית
             </button>
 
-            <ul
-                style={{
-                    listStyle: 'none',
-                    padding: 0,
-                    maxWidth: '600px',
-                    margin: '0 auto',
-                    textAlign: 'center'
-                }}
-            >
+            <ul style={{
+                listStyle: 'none',
+                padding: 0,
+                maxWidth: '600px',
+                margin: '0 auto',
+                textAlign: 'center'
+            }}>
                 {rooms.map((room) => (
                     <li key={room.id} style={{ margin: '0.5rem 0' }}>
-                        <button onClick={() => onSelectRoom(room.id)} style={roomButtonStyle(room.locked)}>
+                        <button
+                            onClick={() => handleSelectRoom(room.id, room.type)}
+                            style={roomButtonStyle(room.locked)}
+                        >
                             <div style={{ display: 'flex', justifyContent: 'space-between', direction: 'rtl', textAlign: 'right' }}>
                                 <span style={{ flex: 1, color: '#fff', fontSize: '1rem' }}>
                                     מזהה חדר: {room.id}
@@ -108,11 +134,14 @@ function HistoryPage({ onSelectRoom }) {
                                     {room.locked ? 'נעול' : 'פתוח'}
                                 </span>
                             </div>
+                            <div style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: '#ccc' }}>
+                                {room.type === 'tournament' ? '🎯 טורניר' : '💵 קאש'}
+                            </div>
                         </button>
                     </li>
                 ))}
                 {rooms.length === 0 && (
-                    <li style={{ textAlign: 'center', marginTop: '2rem' }}>אין משחקים שנוצרו על ידך</li>
+                    <li style={{ textAlign: 'center', marginTop: '2rem' }}>אין משחקים או טורנירים שנוצרו על ידך</li>
                 )}
             </ul>
         </div>

@@ -3,7 +3,7 @@ import { useLanguage } from '../LanguageContext';
 import { auth, database, ref, get, doesRoomExist } from '../firebase';
 import { useNavigate } from 'react-router-dom';
 
-export default function HomePage({ onStart, onLogout, onStartLobby }) {
+export default function HomePage({ onStart, onStartTournament, onLogout, onStartLobby }) {
     const { lang, toggleLanguage } = useLanguage();
     const isHebrew = lang === 'he';
 
@@ -46,7 +46,8 @@ export default function HomePage({ onStart, onLogout, onStartLobby }) {
         borderRadius: '8px',
         fontWeight: 'bold',
         fontSize: '1rem',
-        cursor: 'pointer'
+        cursor: 'pointer',
+        margin: '0.5rem'
     };
 
     const sectionStyle = {
@@ -128,7 +129,11 @@ export default function HomePage({ onStart, onLogout, onStartLobby }) {
                         : 'Take control of your home games — track buy-ins, balances, and player stats, all in one place.'}
                 </p>
                 <button style={btnStyle} onClick={onStart}>
-                    {isHebrew ? 'התחל משחק' : 'Start a Game'}
+                    {isHebrew ? 'התחל משחק קאש' : 'Start Cash Game'}
+                </button>
+                {/* כפתור חדש לטורניר */}
+                <button style={btnStyle} onClick={onStartTournament}>
+                    {isHebrew ? 'התחל טורניר' : 'Start Tournament'}
                 </button>
             </section>
 
@@ -166,25 +171,25 @@ export default function HomePage({ onStart, onLogout, onStartLobby }) {
                             onMouseEnter={(e) => (e.currentTarget.style.background = '#2a2a2a')}
                             onMouseLeave={(e) => (e.currentTarget.style.background = '#1a1a1a')}
                         >
-              <span style={{ flex: 1, color: '#ccc', fontSize: '1rem' }}>
-                {isHebrew ? `מזהה חדר: ${room.id}` : `Room ID: ${room.id}`}
-              </span>
+                            <span style={{ flex: 1, color: '#ccc', fontSize: '1rem' }}>
+                                {isHebrew ? `מזהה חדר: ${room.id}` : `Room ID: ${room.id}`}
+                            </span>
                             <span style={{
                                 flex: 1,
                                 textAlign: 'center',
                                 color: '#ccc',
                                 fontSize: '1rem'
                             }}>
-                {room.displayName}
-              </span>
+                                {room.displayName}
+                            </span>
                             <span style={{
                                 flex: 1,
                                 textAlign: 'left',
                                 color: '#ccc',
                                 fontSize: '1rem'
                             }}>
-                {room.locked ? (isHebrew ? 'נעול' : 'Locked') : (isHebrew ? 'פתוח' : 'Open')}
-              </span>
+                                {room.locked ? (isHebrew ? 'נעול' : 'Locked') : (isHebrew ? 'פתוח' : 'Open')}
+                            </span>
                         </div>
                     )) : (
                         <div style={{ padding: '1rem', textAlign: 'center', color: '#888' }}>

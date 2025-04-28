@@ -6,7 +6,8 @@ import {
   onValue,
   update,
   remove,
-  get
+  get,
+  push
 } from "firebase/database";
 
 import {
@@ -71,6 +72,37 @@ async function createRoom() {
   });
 
   return roomId;
+}
+
+//
+// 🎯 יצירת טורניר חדש
+//
+async function createTournament() {
+  let tournamentId = generateRoomId();
+  const ownerId = auth.currentUser?.uid;
+  const now = new Date();
+  const createdAt = now.toLocaleString("he-IL", {
+    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+  });
+
+  // ודא שהמזהה לא תפוס כבר
+  const existing = await get(ref(database, `tournaments/${tournamentId}`));
+  if (existing.exists()) {
+    return createTournament(); // אם קיים – צור חדש
+  }
+
+  localStorage.setItem("ownerId", ownerId);
+
+  await set(ref(database, `tournaments/${tournamentId}`), {
+    ownerId,
+    players: [],
+    stages: [],
+    currentStageIndex: 0,
+    createdAt,
+    locked: false
+  });
+
+  return tournamentId;
 }
 
 //
@@ -146,6 +178,7 @@ export {
   get,
   auth,
   createRoom,
+  createTournament,
   isRoomOwner,
   doesRoomExist,
   deleteRoom,

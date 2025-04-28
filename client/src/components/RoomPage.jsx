@@ -139,7 +139,8 @@ export default function RoomPage() {
                         border: 'none',
                         borderRadius: '6px',
                         cursor: 'pointer',
-                        fontWeight: 'bold'
+                        fontWeight: 'bold',
+                        margin:'0 auto'
                     }}
                 >
                     חזרה לעמוד הבית
@@ -172,9 +173,10 @@ export default function RoomPage() {
                     background: '#1a1a1a',
                     padding: '1rem',
                     borderRadius: '8px',
-                    marginTop: '2rem',
                     color: '#fff',
-                    boxShadow: '0 0 10px rgba(0,0,0,0.4)'
+                    boxShadow: '0 0 10px rgba(0,0,0,0.4)',
+                    maxWidth: '600px',
+                    margin: '2rem auto 1rem'
                 }}>
                     <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid #d4af37', paddingBottom: '0.5rem', textAlign: 'center' }}>
                         סיכום המשחק

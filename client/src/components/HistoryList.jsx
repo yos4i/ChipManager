@@ -15,9 +15,9 @@ const sectionBoxStyle = {
     borderRadius: '10px',
     boxShadow: '0 0 10px rgba(0, 0, 0, 0.5)',
     color: '#ffffff',
-    marginBottom: '1rem',
-    marginTop: '2rem',
-    minWidth: '300px'
+    margin: '2rem auto 1rem',
+    minWidth: '300px',
+    maxWidth: '600px'
 };
 
 const sectionTitleStyle = {

@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from './firebase';
+import { auth, createRoom, createTournament } from './firebase';
 
 import LoginPage from './components/LoginPage';
 import HomePage from './components/HomePage';
 import HistoryPage from './components/HistoryPage';
 import RoomPage from './components/RoomPage';
-import { createRoom } from './firebase'; // ודא שהפונקציה קיימת
+import TournamentPage from './components/TournamentPage'; // חדש
 
 export default function AppRoutes() {
     const [uid, setUid] = useState(null);
@@ -21,9 +21,9 @@ export default function AppRoutes() {
             } else {
                 setUid(null);
 
-                // אל תעביר ל-login אם הוא רק נכנס לחדר כצופה
+                // לא להעיף צופים בחדרים
                 const path = window.location.pathname;
-                if (!path.startsWith('/room/')) {
+                if (!path.startsWith('/room/') && !path.startsWith('/tournament/')) {
                     navigate('/login');
                 }
             }
@@ -71,6 +71,10 @@ export default function AppRoutes() {
                                 const roomId = await createRoom();
                                 navigate(`/room/${roomId}`);
                             }}
+                            onStartTournament={async () => {
+                                const tournamentId = await createTournament();
+                                navigate(`/tournament/${tournamentId}`);
+                            }}
                             onLogout={async () => {
                                 await auth.signOut();
                                 setUid(null);
@@ -87,10 +91,13 @@ export default function AppRoutes() {
                 }
             />
 
-            {/* Room */}
+            {/* Room page */}
             <Route path="/room/:roomId" element={<RoomPage />} />
 
-            {/* History */}
+            {/* Tournament page */}
+            <Route path="/tournament/:tournamentId" element={<TournamentPage />} />
+
+            {/* History page */}
             <Route path="/history" element={<HistoryPage onSelectRoom={(id) => navigate(`/room/${id}`)} />} />
         </Routes>
     );

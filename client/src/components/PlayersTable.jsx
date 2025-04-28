@@ -3,7 +3,7 @@ import React from 'react';
 
 export default function PlayersTable({ players, onAddAmount, onSetCashOut, onEdit, onEndGame, isLocked }) {
     return (
-        <div style={{ background: '#1a1a1a', padding: '1rem', borderRadius: '10px', marginTop: '2rem' }}>
+        <div style={{ background: '#1a1a1a', padding: '1rem', borderRadius: '10px', maxWidth: '600px', margin: '2rem auto 1rem' }}>
             <h2 style={{ textAlign: 'center', color: '#fff', marginBottom: '1.5rem', borderBottom: '1px solid #d4af37', paddingBottom: '0.5rem' }}>
                 טבלת שחקנים
             </h2>
@@ -33,21 +33,22 @@ export default function PlayersTable({ players, onAddAmount, onSetCashOut, onEdi
                         }}>
                             <div>
                                 <h3 style={{ margin: '0 0 0.5rem' }}>{player.name || '-'}</h3>
-                                <p style={{ margin: '0.25rem 0' }}>Buy-in: {isBuyInValid ? `₪${buyIn}` : '-'}</p>
-                                <p style={{ margin: '0.25rem 0' }}>Cash-out: {isCashOutDefined ? `₪${cashOut}` : '-'}</p>
+                                <p style={{ margin: '0.25rem 0' }}>נכנס עם : {isBuyInValid ? `₪ ${buyIn}` : '-'}</p>
+                                <p style={{ margin: '0.25rem 0' }}>סיים עם : {isCashOutDefined ? `₪ ${cashOut}` : ''}</p>
                                 <p style={{
                                     margin: '0.25rem 0',
                                     color: profit !== null ? (profit >= 0 ? 'lightgreen' : 'red') : '#aaa',
                                     fontWeight: 'bold'
                                 }}>
-                                    {profit !== null ? (profit >= 0 ? `+₪${profit}` : `₪${profit}`) : '-'}
+                                   מאזן : {profit !== null ? (profit >= 0 ? `${profit}₪ +` : `${Math.abs(profit)}₪ -`) : ''}
+
                                 </p>
                             </div>
 
                             {!isLocked && (
                                 <div style={{ display: 'flex', gap: '0.5rem'}}>
-                                    <button onClick={() => onAddAmount(index)} style={buttonStyle('blue')}>💵</button>
-                                    <button onClick={() => onSetCashOut(index)} style={buttonStyle('green')}>🏁</button>
+                                    <button onClick={() => onAddAmount(index)} style={buttonStyle('blue')}>כניסה חוזרת</button>
+                                    <button onClick={() => onSetCashOut(index)} style={buttonStyle('green')}>סיים</button>
                                     <button onClick={() => onEdit(index)} style={buttonStyle('gray')}>✏️</button>
                                 </div>
                             )}
@@ -92,9 +93,9 @@ function buttonStyle(color) {
     };
 
     switch (color) {
-        case 'green': return { ...base, background: '#4CAF50' };
+        case 'green': return { ...base, background: '#d4af37' };
         case 'blue': return { ...base, background: '#d4af37' };
-        case 'gray': return { ...base, background: '#555' };
+        case 'gray': return { ...base, background: '#2b2929' };
         default: return base;
     }
 }
