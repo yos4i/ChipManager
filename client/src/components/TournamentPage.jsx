@@ -446,9 +446,12 @@ const inputStyle = {
 const buttonStyle = {
     background: '#d4af37',
     color: '#000',
-    padding: '0.5rem 1rem',
+    padding: '0.5rem 1.5rem',
     borderRadius: '8px',
     fontWeight: 'bold',
     cursor: 'pointer',
-    marginTop: '0.5rem'
+    marginTop: '0.5rem',
+    display: 'inline-block', // חשוב מאוד
+    textAlign: 'center',
+    width: 'auto' // הוספתי
 };

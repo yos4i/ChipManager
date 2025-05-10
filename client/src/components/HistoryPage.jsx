@@ -15,6 +15,16 @@ function HistoryPage() {
         return () => unsubscribe();
     }, []);
 
+    // פונקציה לפירוש תאריך מותאם אישית
+    function parseCustomDate(str) {
+        const [datePart, timePart] = str.split(', ');
+        const [day, month] = datePart.split('.').map(Number);
+        const [hours, minutes] = timePart.split(':').map(Number);
+        const now = new Date();
+        const year = now.getFullYear();
+        return new Date(year, month - 1, day, hours, minutes);
+    }
+
     useEffect(() => {
         if (!uid) return;
 
@@ -44,10 +54,10 @@ function HistoryPage() {
                     id: room.id,
                     locked: room.locked || false,
                     createdAt: room.createdAt || '',
-                    displayName: room.createdAt ? ` ${room.createdAt}` : room.id,
+                    displayName: room.createdAt ? room.createdAt : room.id,
                     type: room.type || 'cash'
                 }))
-                .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+                .sort((a, b) => parseCustomDate(b.createdAt) - parseCustomDate(a.createdAt)); // מיון אמיתי לפי תאריך
 
             setRooms(userRooms);
         }
@@ -135,7 +145,7 @@ function HistoryPage() {
                                 </span>
                             </div>
                             <div style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: '#ccc' }}>
-                                {room.type === 'tournament' ? '🎯 טורניר' : '💵 קאש'}
+                                {room.type === 'tournament' ? ' טורניר' : ' קאש'}
                             </div>
                         </button>
                     </li>

@@ -13,6 +13,16 @@ export default function HomePage({ onStart, onStartTournament, onLogout, onStart
 
     const navigate = useNavigate();
 
+    // פונקציה לפירוש תאריך מותאם אישית
+    function parseCustomDate(str) {
+        const [datePart, timePart] = str.split(', ');
+        const [day, month] = datePart.split('.').map(Number);
+        const [hours, minutes] = timePart.split(':').map(Number);
+        const now = new Date();
+        const year = now.getFullYear();
+        return new Date(year, month - 1, day, hours, minutes);
+    }
+
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged((user) => {
             if (user) {
@@ -28,7 +38,7 @@ export default function HomePage({ onStart, onStartTournament, onLogout, onStart
                                 displayName: roomData.createdAt || roomId,
                                 locked: roomData.locked || false,
                             }))
-                            .sort((a, b) => b.displayName.localeCompare(a.displayName))
+                            .sort((a, b) => parseCustomDate(b.displayName) - parseCustomDate(a.displayName))
                             .slice(0, 4);
                         setRecentRooms(userRooms);
                     }
@@ -81,7 +91,6 @@ export default function HomePage({ onStart, onStartTournament, onLogout, onStart
             fontFamily: 'sans-serif',
             textAlign: 'center'
         }}>
-            {/* Header */}
             <header style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -115,7 +124,6 @@ export default function HomePage({ onStart, onStartTournament, onLogout, onStart
                 </nav>
             </header>
 
-            {/* Hero Section */}
             <section style={{ ...sectionStyle, textAlign: 'center' }}>
                 <div style={{ marginBottom: '2rem' }}>
                     <img src="/Mylogo.png" alt="ChipManager Logo" style={{ height: 100 }} />
@@ -131,13 +139,11 @@ export default function HomePage({ onStart, onStartTournament, onLogout, onStart
                 <button style={btnStyle} onClick={onStart}>
                     {isHebrew ? 'התחל משחק קאש' : 'Start Cash Game'}
                 </button>
-                {/* כפתור חדש לטורניר */}
                 <button style={btnStyle} onClick={onStartTournament}>
                     {isHebrew ? 'התחל טורניר' : 'Start Tournament'}
                 </button>
             </section>
 
-            {/* Recent Games */}
             <section style={sectionStyle}>
                 <h2 style={{
                     fontSize: '1.5rem',
@@ -199,7 +205,6 @@ export default function HomePage({ onStart, onStartTournament, onLogout, onStart
                 </div>
             </section>
 
-            {/* Guest Join */}
             <section style={{ ...sectionStyle, marginTop: '1rem', textAlign: 'center' }}>
                 <h3 style={{ marginBottom: '0.5rem' }}>
                     {isHebrew ? 'הצטרף לצפייה בחדר קיים' : 'Join an Existing Room as Guest'}
@@ -238,7 +243,6 @@ export default function HomePage({ onStart, onStartTournament, onLogout, onStart
                 {guestError && <p style={{ color: 'red' }}>{guestError}</p>}
             </section>
 
-            {/* Why Choose Us */}
             <section style={sectionStyle}>
                 <h2 style={{
                     fontSize: '1.5rem',

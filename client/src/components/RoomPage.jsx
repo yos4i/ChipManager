@@ -130,21 +130,7 @@ export default function RoomPage() {
         <div style={{ background: '#0e0e0e', color: '#fff', minHeight: '100vh', padding: '2rem' }}>
             {/* כפתור חזרה לעמוד הבית */}
             <div style={{ marginBottom: '1rem' }}>
-                <button
-                    onClick={() => navigate('/')}
-                    style={{
-                        background: '#d4af37',
-                        color: '#000',
-                        padding: '0.5rem 1rem',
-                        border: 'none',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        fontWeight: 'bold',
-                        margin:'0 auto'
-                    }}
-                >
-                    חזרה לעמוד הבית
-                </button>
+
             </div>
 
             <h2 style={{ textAlign: 'center', marginBottom: '1rem' , fontSize: 15}}> {roomId} : מזהה חדר</h2>
@@ -169,34 +155,55 @@ export default function RoomPage() {
             <HistoryList history={history} />
 
             {summaryLines.length > 0 && (
-                <div style={{
-                    background: '#1a1a1a',
-                    padding: '1rem',
-                    borderRadius: '8px',
-                    color: '#fff',
-                    boxShadow: '0 0 10px rgba(0,0,0,0.4)',
-                    maxWidth: '600px',
-                    margin: '2rem auto 1rem'
-                }}>
-                    <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid #d4af37', paddingBottom: '0.5rem', textAlign: 'center' }}>
-                        סיכום המשחק
-                    </h3>
-                    <ul style={{ listStyle: 'none', padding: 0 }}>
-                        {summaryLines.map((line, i) => (
-                            <li key={i} style={{
-                                background: '#111',
-                                border: '1px solid #d4af37',
-                                borderRadius: '8px',
-                                padding: '0.75rem 1rem',
-                                marginBottom: '0.5rem',
-                                textAlign: 'center',
-                            }}>
-                                {line}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
+                <>
+                    <div style={{
+                        background: '#1a1a1a',
+                        padding: '1rem',
+                        borderRadius: '8px',
+                        color: '#fff',
+                        boxShadow: '0 0 10px rgba(0,0,0,0.4)',
+                        maxWidth: '600px',
+                        margin: '2rem auto 1rem'
+                    }}>
+                        <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid #d4af37', paddingBottom: '0.5rem', textAlign: 'center' }}>
+                            סיכום המשחק
+                        </h3>
+                        <ul style={{ listStyle: 'none', padding: 0 }}>
+                            {summaryLines.map((line, i) => (
+                                <li key={i} style={{
+                                    background: '#111',
+                                    border: '1px solid #d4af37',
+                                    borderRadius: '8px',
+                                    padding: '0.75rem 1rem',
+                                    marginBottom: '0.5rem',
+                                    textAlign: 'center',
+                                }}>
+                                    {line}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    {/* כפתור מחוץ לתיבה ומרוכז */}
+                    <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+                        <button
+                            onClick={() => navigate('/')}
+                            style={{
+                                background: '#d4af37',
+                                color: '#000',
+                                padding: '0.5rem 1rem',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontWeight: 'bold'
+                            }}
+                        >
+                            חזרה לעמוד הבית
+                        </button>
+                    </div>
+                </>
             )}
+
         </div>
     );
 }
