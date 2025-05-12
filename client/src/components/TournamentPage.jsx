@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 
 const defaultStages = [
@@ -19,10 +18,11 @@ export default function TournamentPage() {
     const [speechAllowed, setSpeechAllowed] = useState(false);
     const [tournamentStarted, setTournamentStarted] = useState(false);
     const [voices, setVoices] = useState([]);
+    const stageAdvancePending = useRef(false);
 
     const [players, setPlayers] = useState([]);
     const [currentStageIndex, setCurrentStageIndex] = useState(0);
-    const [secondsLeft, setSecondsLeft] = useState(stages[0].duration * 60);
+    const [secondsLeft, setSecondsLeft] = useState(() => stages[0]?.duration ? stages[0].duration * 60 : 0);
     const [totalSecondsPassed, setTotalSecondsPassed] = useState(0);
     const [newPlayerName, setNewPlayerName] = useState('');
     const [newPlayerImage, setNewPlayerImage] = useState(null);
@@ -31,6 +31,40 @@ export default function TournamentPage() {
 
     const [newStage, setNewStage] = useState({ smallBlind: '', bigBlind: '', ante: '', duration: '' });
     const [editIndex, setEditIndex] = useState(null);
+    const templateOptions = {
+        '4 שעות טורניר': [
+            { smallBlind: 100, bigBlind: 200, ante: 0, duration: 20 },
+            { smallBlind: 150, bigBlind: 300, ante: 0, duration: 20 },
+            { break: true, duration: 10 },
+            { smallBlind: 200, bigBlind: 400, ante: 0, duration: 20 },
+            { smallBlind: 300, bigBlind: 600, ante: 0, duration: 20 },
+        ],
+        '5 שעות טורניר': [
+            { smallBlind: 100, bigBlind: 200, ante: 0, duration: 25 },
+            { smallBlind: 200, bigBlind: 400, ante: 0, duration: 25 },
+            { break: true, duration: 10 },
+            { smallBlind: 300, bigBlind: 600, ante: 0, duration: 25 },
+            { smallBlind: 400, bigBlind: 800, ante: 0, duration: 25 },
+        ],
+        '4 שעות טורניר סוג ב': [
+            { smallBlind: 50, bigBlind: 100, ante: 0, duration: 15 },
+            { smallBlind: 75, bigBlind: 150, ante: 0, duration: 15 },
+            { break: true, duration: 10 },
+            { smallBlind: 100, bigBlind: 200, ante: 0, duration: 15 },
+            { smallBlind: 150, bigBlind: 300, ante: 0, duration: 15 },
+        ],
+    };
+
+    const handleTemplateSelect = (e) => {
+        const selected = e.target.value;
+        if (templateOptions[selected]) {
+            setStages(templateOptions[selected]);
+            setCurrentStageIndex(0);
+            setSecondsLeft(templateOptions[selected][0]?.duration * 60 || 0);
+            setMessage(`✅ נטענה תבנית: ${selected}`);
+        }
+    };
+
 
     const currentStage = stages[currentStageIndex];
     const speak = (text) => {
@@ -82,13 +116,21 @@ export default function TournamentPage() {
                         setCountdownPlayed(true);
                     }
                     if (prev > 0) return prev - 1;
-                    else {
-                        advanceStage();
-                        return 0;
+
+                    if (!stageAdvancePending.current) {
+                        stageAdvancePending.current = true;
+
+                        // דחיית הקריאה למחזור הבא
+                        setTimeout(() => {
+                            advanceStage();
+                        }, 500);
                     }
+
+                    return 0;
                 });
             }
         }, 1000);
+
 
         return () => clearInterval(interval);
     }, [tournamentStarted, isPaused, currentStageIndex, countdownPlayed, stages]);
@@ -112,24 +154,31 @@ export default function TournamentPage() {
     }, [stages]);
 
     const advanceStage = () => {
-        if (currentStageIndex < stages.length - 1) {
-            const nextStage = stages[currentStageIndex + 1];
-            setCurrentStageIndex(prev => prev + 1);
-            setSecondsLeft(nextStage.duration * 60);
-            setCountdownPlayed(false);
-
-            if (!nextStage.break) {
-                // מקריא את הבליינדים
-                if (!nextStage.break) {
-                    speak(`שמאל בליינד ${nextStage.smallBlind}, ביג בליינד ${nextStage.bigBlind}`);
-                }
+        setCurrentStageIndex(prev => {
+            const nextIndex = prev + 1;
+            if (nextIndex < stages.length) {
+                setSecondsLeft(stages[nextIndex].duration * 60);
+                setCountdownPlayed(false);
+                stageAdvancePending.current = false;
+                return nextIndex;
+            } else {
+                alert('הטורניר הסתיים!');
+                navigate('/');
+                return prev;
             }
-        } else {
-            alert('הטורניר הסתיים!');
-            navigate('/');
-        }
+        });
     };
 
+
+    useEffect(() => {
+        if (!tournamentStarted || !speechAllowed || !currentStage) return;
+
+        if (currentStage.break) {
+            speak('הפסקה');
+        } else if (typeof currentStage.smallBlind === 'number' && typeof currentStage.bigBlind === 'number') {
+            speak(`שמאל בליינד ${currentStage.smallBlind}, ביג בליינד ${currentStage.bigBlind}`);
+        }
+    }, [currentStageIndex, speechAllowed]);
 
     const formatTime = (totalSeconds) => {
         const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
@@ -188,16 +237,20 @@ export default function TournamentPage() {
     };
 
     const addStage = () => {
-        if (!newStage.smallBlind || !newStage.bigBlind || !newStage.duration) {
-            setMessage('❌ יש למלא לפחות Small Blind, Big Blind וזמן');
+        if (!newStage.duration) {
+            setMessage('❌ יש להזין זמן שלב או הפסקה');
             return;
         }
-        const stage = {
-            smallBlind: Number(newStage.smallBlind),
-            bigBlind: Number(newStage.bigBlind),
-            ante: Number(newStage.ante) || 0,
-            duration: Number(newStage.duration)
-        };
+
+        const isBreak = !newStage.smallBlind && !newStage.bigBlind;
+        const stage = isBreak
+            ? { break: true, duration: Number(newStage.duration) }
+            : {
+                smallBlind: Number(newStage.smallBlind),
+                bigBlind: Number(newStage.bigBlind),
+                ante: Number(newStage.ante) || 0,
+                duration: Number(newStage.duration)
+            };
 
         if (editIndex !== null) {
             const updatedStages = [...stages];
@@ -207,7 +260,7 @@ export default function TournamentPage() {
             setMessage('✅ שלב עודכן בהצלחה');
         } else {
             setStages(prev => [...prev, stage]);
-            setMessage('✅ שלב נוסף בהצלחה');
+            setMessage(isBreak ? '☕ נוספה הפסקה' : '✅ שלב נוסף בהצלחה');
         }
 
         setNewStage({ smallBlind: '', bigBlind: '', ante: '', duration: '' });
@@ -215,49 +268,21 @@ export default function TournamentPage() {
 
     const startEditStage = (index) => {
         const stage = stages[index];
-        if (stage.break) {
-            setMessage('❌ לא ניתן לערוך הפסקות');
-            return;
-        }
         setNewStage({
-            smallBlind: stage.smallBlind,
-            bigBlind: stage.bigBlind,
-            ante: stage.ante,
-            duration: stage.duration
+            smallBlind: stage.smallBlind || '',
+            bigBlind: stage.bigBlind || '',
+            ante: stage.ante || '',
+            duration: stage.duration || ''
         });
         setEditIndex(index);
     };
 
-    const handleOnDragEnd = (result) => {
-        if (!result.destination) return;
 
-        const items = Array.from(stages);
-        const [reorderedItem] = items.splice(result.source.index, 1);
-        items.splice(result.destination.index, 0, reorderedItem);
 
-        setStages(items);
-    };
 
     return (
         <div style={{ backgroundColor: '#0e0e0e', color: '#ffffff', minHeight: '100vh', fontFamily: 'sans-serif', padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <button
-                onClick={() => navigate('/')}
-                style={{
-                    position: 'absolute',
-                    top: '20px',
-                    left: '20px',
-                    background: '#d4af37',
-                    color: '#000000',
-                    border: 'none',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '8px',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    zIndex: 1000
-                }}
-            >
-                חזרה לעמוד הבית
-            </button>
+
             {!tournamentStarted && (
                 <button
                     onClick={startTournament}
@@ -316,73 +341,38 @@ export default function TournamentPage() {
             <div style={{ display: 'flex', flexDirection: 'row-reverse', gap: '2rem', width: '100%', maxWidth: '1200px' }}>
                 {/* שלבים */}
                 <div style={{ flex: '1', background: '#1a1a1a', borderRadius: '10px', padding: '1rem', textAlign: 'center', height: '600px', overflowY: 'auto' }}>
+                    {stages.map((stage, idx) => (
+                        <div
+                            key={idx}
+                            onClick={() => startEditStage(idx)}
+                            style={{
+                                background: editIndex === idx ? '#444' : '#2a2a2a',
+                                margin: '0.5rem 0',
+                                padding: '0.5rem',
+                                borderRadius: '8px',
+                                fontWeight: 'bold',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                direction: 'rtl',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            <div>{stage.break ? '☕ הפסקה' : `בליינדים ${stage.smallBlind}/${stage.bigBlind}${stage.ante > 0 ? ` (אנטה ${stage.ante})` : ''}`}</div>
+                            <div>{!stage.break && `${stage.duration} דקות`}</div>
+                            <div style={{ color: '#d4af37' }}>{editIndex === idx && '🔧'}</div>
+                        </div>
+                    ))}
 
-                    {/* Drag and Drop לשלבים */}
-                    <DragDropContext onDragEnd={handleOnDragEnd}>
-                        <Droppable droppableId="stages">
-                            {(provided) => (
-                                <div {...provided.droppableProps} ref={provided.innerRef}>
-                                    {stages.map((stage, idx) => (
-                                        <Draggable key={idx} draggableId={idx.toString()} index={idx}>
-                                            {(provided) => (
-                                                <div
-                                                    ref={provided.innerRef}
-                                                    {...provided.draggableProps}
-                                                    {...provided.dragHandleProps}
-                                                    style={{
-                                                        ...provided.draggableProps.style,
-                                                        background: '#2a2a2a',
-                                                        margin: '0.5rem 0',
-                                                        padding: '0.5rem',
-                                                        borderRadius: '8px',
-                                                        fontWeight: 'bold',
-                                                        cursor: 'grab',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'space-between',
-                                                        direction: 'rtl'
-                                                    }}
-                                                >
-                                                    {/* ימין: בליינדים */}
-                                                    <div style={{ flex: 1, textAlign: 'right' }}>
-                                                        {stage.break ? (
-                                                            <>☕ הפסקה</>
-                                                        ) : (
-                                                            <>בליינדים {stage.smallBlind}/{stage.bigBlind}{stage.ante > 0 ? ` (אנטה ${stage.ante})` : ''}</>
-                                                        )}
-                                                    </div>
-
-                                                    {/* אמצע: משך זמן */}
-                                                    <div style={{ flex: 1, textAlign: 'center', fontSize: '0.9rem', color: '#aaa' }}>
-                                                        {!stage.break && (
-                                                            <>{stage.duration} דקות</>
-                                                        )}
-                                                    </div>
-
-                                                    {/* שמאל: כפתור עפרון */}
-                                                    <div style={{ flex: 0 }}>
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); startEditStage(idx); }}
-                                                            style={{
-                                                                background: 'none',
-                                                                border: 'none',
-                                                                color: '#d4af37',
-                                                                fontSize: '1.2rem',
-                                                                cursor: 'pointer'
-                                                            }}
-                                                        >
-                                                            ✏️
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </Draggable>
-                                    ))}
-                                    {provided.placeholder}
-                                </div>
-                            )}
-                        </Droppable>
-                    </DragDropContext>
+                    {!tournamentStarted && (
+                        <div style={{ marginBottom: '1rem' }}>
+                            <select onChange={handleTemplateSelect} style={inputStyle}>
+                                <option value="">בחר תבנית טורניר</option>
+                                {Object.keys(templateOptions).map((key, idx) => (
+                                    <option key={idx} value={key}>{key}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
 
                     {/* הוספת/עריכת שלב מתחת לשלבים */}
                     <div style={{ marginTop: '2rem', textAlign: 'center' }}>
@@ -395,7 +385,18 @@ export default function TournamentPage() {
                         <button onClick={addStage} style={buttonStyle}>
                             {editIndex !== null ? 'עדכן שלב' : 'הוסף שלב'}
                         </button>
+
                     </div>
+                    <button
+                        onClick={() => {
+                            setStages(prev => [...prev, { break: true, duration: 10 }]);
+                            setMessage('נוספה הפסקה של 10 דקות');
+                        }}
+                        style={{ ...buttonStyle, background: '#555', color: '#fff', marginTop: '1rem' }}
+                    >
+                        הוסף הפסקה
+                    </button>
+
                 </div>
                 {/* שחקנים */}
                 <div style={{ flex: '1', background: '#1a1a1a', borderRadius: '10px', padding: '1rem', textAlign: 'center', height: '600px', overflowY: 'auto' }}>
@@ -428,8 +429,24 @@ export default function TournamentPage() {
             </div>
             <div style={{ fontSize: '1rem', fontWeight: 'bold', marginBottom: '1rem', color: '#ffffff' , marginTop:'1rem'}}>
                 {tournamentId} : מזהה חדר
+
             </div>
+            <button
+                onClick={() => navigate('/')}
+                style={{
+                    background: '#d4af37',
+                    color: '#000',
+                    padding: '0.5rem 1rem',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold'
+                }}
+            >
+                חזרה לעמוד הבית
+            </button>
         </div>
+
 
     );
 }
