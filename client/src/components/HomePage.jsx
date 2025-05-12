@@ -24,29 +24,44 @@ export default function HomePage({ onStart, onStartTournament, onLogout, onStart
     }
 
     useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged((user) => {
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
             if (user) {
                 const uid = user.uid;
-                const roomsRef = ref(database, 'rooms');
-                get(roomsRef).then(snapshot => {
-                    if (snapshot.exists()) {
-                        const data = snapshot.val();
-                        const userRooms = Object.entries(data)
-                            .filter(([_, room]) => room.ownerId === uid)
-                            .map(([roomId, roomData]) => ({
-                                id: roomId,
-                                displayName: roomData.createdAt || roomId,
-                                locked: roomData.locked || false,
-                            }))
-                            .sort((a, b) => parseCustomDate(b.displayName) - parseCustomDate(a.displayName))
-                            .slice(0, 4);
-                        setRecentRooms(userRooms);
-                    }
-                });
+
+                const roomsSnapshot = await get(ref(database, 'rooms'));
+                const tournamentsSnapshot = await get(ref(database, 'tournaments'));
+
+                const roomsData = roomsSnapshot.val() || {};
+                const tournamentsData = tournamentsSnapshot.val() || {};
+
+                const allRooms = [
+                    ...Object.entries(roomsData).map(([id, room]) => ({
+                        id,
+                        displayName: room.createdAt || id,
+                        locked: room.locked || false,
+                        type: 'cash',
+                        ownerId: room.ownerId || ''
+                    })),
+                    ...Object.entries(tournamentsData).map(([id, tournament]) => ({
+                        id,
+                        displayName: tournament.createdAt || id,
+                        locked: tournament.locked || false,
+                        type: 'tournament',
+                        ownerId: tournament.ownerId || ''
+                    }))
+                ];
+
+                const userRooms = allRooms
+                    .filter(room => room.ownerId === uid)
+                    .sort((a, b) => parseCustomDate(b.displayName) - parseCustomDate(a.displayName))
+                    .slice(0, 4);
+
+                setRecentRooms(userRooms);
             }
         });
         return () => unsubscribe();
     }, []);
+
 
     const btnStyle = {
         background: '#d4af37',
@@ -163,7 +178,7 @@ export default function HomePage({ onStart, onStartTournament, onLogout, onStart
                     {recentRooms.length > 0 ? recentRooms.map((room, idx) => (
                         <div
                             key={idx}
-                            onClick={() => navigate(`/room/${room.id}`)}
+                            onClick={() => navigate(room.type === 'tournament' ? `/tournament/${room.id}` : `/room/${room.id}`)}
                             style={{
                                 display: 'flex',
                                 justifyContent: 'space-between',
@@ -178,7 +193,9 @@ export default function HomePage({ onStart, onStartTournament, onLogout, onStart
                             onMouseLeave={(e) => (e.currentTarget.style.background = '#1a1a1a')}
                         >
                             <span style={{ flex: 1, color: '#ccc', fontSize: '1rem' }}>
-                                {isHebrew ? `מזהה חדר: ${room.id}` : `Room ID: ${room.id}`}
+                                  {isHebrew
+                                      ? `מזהה חדר: ${room.id} • ${room.type === 'tournament' ? 'טורניר' : 'קאש'}`
+                                      : `Room ID: ${room.id} • ${room.type === 'tournament' ? 'Tournament' : 'Cash'}`}
                             </span>
                             <span style={{
                                 flex: 1,
