@@ -210,7 +210,7 @@ export default function TournamentPage() {
         if (currentStage.break) {
             speak('הפסקה');
         } else if (typeof currentStage.smallBlind === 'number' && typeof currentStage.bigBlind === 'number') {
-            speak(`שמאל בליינד ${currentStage.smallBlind}, ביג בליינד ${currentStage.bigBlind}`);
+            speak(`שמאל ${currentStage.smallBlind}, ביג ${currentStage.bigBlind}`);
         }
     }, [currentStageIndex, speechAllowed]);
 
