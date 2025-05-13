@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+// import { useMemo } from 'react';
 
 
 const defaultStages = [
@@ -13,6 +14,8 @@ export default function TournamentPage() {
         const savedTemplate = localStorage.getItem('tournamentTemplate');
         return savedTemplate ? JSON.parse(savedTemplate) : defaultStages;
     });
+
+
     const countdownSound = new Audio('/countdown.mp3');
     const [countdownPlayed, setCountdownPlayed] = useState(false);
     const [speechAllowed, setSpeechAllowed] = useState(false);
@@ -20,10 +23,18 @@ export default function TournamentPage() {
     const [voices, setVoices] = useState([]);
     const stageAdvancePending = useRef(false);
 
-    const [players, setPlayers] = useState([]);
-    const [currentStageIndex, setCurrentStageIndex] = useState(0);
-    const [secondsLeft, setSecondsLeft] = useState(() => stages[0]?.duration ? stages[0].duration * 60 : 0);
-    const [totalSecondsPassed, setTotalSecondsPassed] = useState(0);
+
+
+    const [players, setPlayers] = useState(() => {
+        // localStorage.setItem(`players-${tournamentId}`, JSON.stringify(players));
+        const saved = localStorage.getItem(`players-${tournamentId}`);
+        return saved ? JSON.parse(saved) : [];
+    });
+
+
+    const [currentStageIndex, setCurrentStageIndex] = useState(() => Number(localStorage.getItem('currentStageIndex') || 0));
+    const [secondsLeft, setSecondsLeft] = useState(() => Number(localStorage.getItem('secondsLeft') || 0));
+    const [totalSecondsPassed, setTotalSecondsPassed] = useState(() => Number(localStorage.getItem('totalSecondsPassed') || 0));
     const [newPlayerName, setNewPlayerName] = useState('');
     const [newPlayerImage, setNewPlayerImage] = useState(null);
     const [isPaused, setIsPaused] = useState(false);
@@ -44,21 +55,7 @@ export default function TournamentPage() {
             { break: true, duration: 10 },
             { smallBlind: 200, bigBlind: 400, ante: 0, duration: 20 },
             { smallBlind: 300, bigBlind: 600, ante: 0, duration: 20 },
-        ],
-        '5 שעות טורניר': [
-            { smallBlind: 100, bigBlind: 200, ante: 0, duration: 25 },
-            { smallBlind: 200, bigBlind: 400, ante: 0, duration: 25 },
-            { break: true, duration: 10 },
-            { smallBlind: 300, bigBlind: 600, ante: 0, duration: 25 },
-            { smallBlind: 400, bigBlind: 800, ante: 0, duration: 25 },
-        ],
-        '4 שעות טורניר סוג ב': [
-            { smallBlind: 50, bigBlind: 100, ante: 0, duration: 15 },
-            { smallBlind: 75, bigBlind: 150, ante: 0, duration: 15 },
-            { break: true, duration: 10 },
-            { smallBlind: 100, bigBlind: 200, ante: 0, duration: 15 },
-            { smallBlind: 150, bigBlind: 300, ante: 0, duration: 15 },
-        ],
+        ]
     };
     const saveCustomTemplate = (name) => {
         const existing = JSON.parse(localStorage.getItem('customTemplates') || '{}');
@@ -106,6 +103,22 @@ export default function TournamentPage() {
         }
     };
 
+
+
+    useEffect(() => {
+        localStorage.setItem('currentStageIndex', currentStageIndex);
+    }, [currentStageIndex]);
+
+    useEffect(() => {
+        localStorage.setItem('secondsLeft', secondsLeft);
+    }, [secondsLeft]);
+
+    useEffect(() => {
+        localStorage.setItem('totalSecondsPassed', totalSecondsPassed);
+    }, [totalSecondsPassed]);
+    useEffect(() => {
+        localStorage.setItem('tournamentPlayers', JSON.stringify(players));
+    }, [players]);
 
 
     const startTournament = () => {
@@ -230,9 +243,14 @@ export default function TournamentPage() {
     const handleImageUpload = (event) => {
         const file = event.target.files[0];
         if (file) {
-            setNewPlayerImage(URL.createObjectURL(file));
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setNewPlayerImage(reader.result); // זה יהיה base64
+            };
+            reader.readAsDataURL(file);
         }
     };
+
 
     const addPlayer = () => {
         if (!newPlayerName.trim()) {
@@ -299,17 +317,17 @@ export default function TournamentPage() {
 
 
 
-// const startEditStage = (index) => {
-//     const stage = stages[index];
-//     setEditIndex(index);
-//     setEditingMode(true);
-//     setNewStage({
-//         smallBlind: stage.smallBlind || '',
-//         bigBlind: stage.bigBlind || '',
-//         ante: stage.ante || '',
-//         duration: stage.duration || ''
-//     });
-// };
+const startEditStage = (index) => {
+    const stage = stages[index];
+    setEditIndex(index);
+    setEditingMode(true);
+    setNewStage({
+        smallBlind: stage.smallBlind || '',
+        bigBlind: stage.bigBlind || '',
+        ante: stage.ante || '',
+        duration: stage.duration || ''
+    });
+};
 
 
 
@@ -357,7 +375,11 @@ export default function TournamentPage() {
                     {stages.map((stage, idx) => (
                         <div
                             key={idx}
-                            onClick={() => setLastClickedIndex(idx)}
+                            onClick={() => {
+                                setLastClickedIndex(idx);
+                                startEditStage(idx); // הוסף את זה
+                            }}
+
                             style={{
                                 background: currentStageIndex === idx
                                     ? '#d4af37'
@@ -470,7 +492,7 @@ export default function TournamentPage() {
                         <div style={{ marginBottom: '1rem' }}>
                             <select onChange={handleTemplateSelect} style={inputStyle}>
                                 <option value="">בחר תבנית טורניר</option>
-                                {Object.keys(templateOptions).map((key, idx) => (
+                                {Object.keys(getAllTemplates()).map((key, idx) => (
                                     <option key={idx} value={key}>{key}</option>
                                 ))}
                             </select>
@@ -552,7 +574,7 @@ export default function TournamentPage() {
                     {players.map((player, idx) => (
                         <div key={idx} onClick={() => toggleElimination(idx)} style={{ background: player.eliminated ? '#880e4f' : '#2a2a2a', margin: '0.5rem 0', padding: '0.5rem', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                             {player.image ? (
-                                <img src={player.image} alt="avatar" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
+                                <img src={player.image} alt="avatar" style={{ width: '75px', height: '75px', borderRadius: '50%', objectFit: 'cover' }} />
                             ) : (
                                 <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#d4af37', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', color: '#0e0e0e', fontWeight: 'bold' }}>
                                     {player.name[0]}

@@ -112,31 +112,6 @@ export default function HomePage({ onStart, onStartTournament, onLogout, onStart
                 alignItems: 'center',
                 padding: '1rem 2rem'
             }}>
-                <nav style={{ display: 'flex', gap: '1.5rem' }}>
-                    <button onClick={onLogout} style={{
-                        background: '#f44336',
-                        color: '#fff',
-                        border: 'none',
-                        padding: '0.5rem 1rem',
-                        borderRadius: '6px',
-                        cursor: 'pointer'
-                    }}>
-                        {isHebrew ? 'התנתק' : 'Logout'}
-                    </button>
-                    <button
-                        onClick={toggleLanguage}
-                        style={{
-                            padding: '0.5rem 1rem',
-                            background: '#333',
-                            color: '#fff',
-                            border: '1px solid #888',
-                            borderRadius: '6px',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        {lang === 'he' ? 'English' : 'עברית'}
-                    </button>
-                </nav>
             </header>
 
             <section style={{ ...sectionStyle, textAlign: 'center' }}>
@@ -144,13 +119,8 @@ export default function HomePage({ onStart, onStartTournament, onLogout, onStart
                     <img src="/Mylogo.png" alt="ChipManager Logo" style={{ height: 100 }} />
                 </div>
                 <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>
-                    {isHebrew ? 'נהל את ערבי הפוקר שלך כמו מקצוען' : 'Manage Your Poker Nights Like a Pro'}
+                    {isHebrew ? 'ניהול משחקי פוקר' : 'Manage Poker Games'}
                 </h1>
-                <p style={{ color: '#ccc', fontSize: '1.1rem', marginBottom: '2rem' }}>
-                    {isHebrew
-                        ? 'שלוט במשחקים הביתיים שלך — נהל כניסות, יתרות וסטטיסטיקות שחקנים במקום אחד'
-                        : 'Take control of your home games — track buy-ins, balances, and player stats, all in one place.'}
-                </p>
                 <button style={btnStyle} onClick={onStart}>
                     {isHebrew ? 'התחל משחק קאש' : 'Start Cash Game'}
                 </button>
@@ -224,7 +194,7 @@ export default function HomePage({ onStart, onStartTournament, onLogout, onStart
 
             <section style={{ ...sectionStyle, marginTop: '1rem', textAlign: 'center' }}>
                 <h3 style={{ marginBottom: '0.5rem' }}>
-                    {isHebrew ? 'הצטרף לצפייה בחדר קיים' : 'Join an Existing Room as Guest'}
+                    {isHebrew ? 'הצטרף לחדר' : 'Join Room'}
                 </h3>
                 <input
                     type="text"
@@ -266,7 +236,6 @@ export default function HomePage({ onStart, onStartTournament, onLogout, onStart
                     marginBottom: '1rem',
                     textAlign: 'center'
                 }}>
-                    {isHebrew ? 'למה לבחור בנו' : 'Why Choose Us'}
                 </h2>
                 <div style={{
                     display: 'flex',
@@ -276,8 +245,7 @@ export default function HomePage({ onStart, onStartTournament, onLogout, onStart
                 }}>
                     {[
                         [isHebrew ? 'היסטוריית משחקים מלאה' : 'Full Game History', '🗂️', onStartLobby],
-                        [isHebrew ? 'ניהול שחקנים קל' : 'Easy Player Management', '🧑‍🤝‍🧑'],
-                        [isHebrew ? 'גישה מכל מכשיר' : 'Cross-Device Access', '📱💻']
+
                     ].map(([title, icon, onClick], i) => (
                         <div
                             key={i}
@@ -293,10 +261,43 @@ export default function HomePage({ onStart, onStartTournament, onLogout, onStart
                         >
                             <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{icon}</div>
                             <strong>{title}</strong>
+
                         </div>
                     ))}
                 </div>
             </section>
+            <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                <nav style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center', paddingBottom: '1rem' }}>
+                    <button
+                        onClick={onLogout}
+                        style={{
+                            background: '#f44336',
+                            color: '#fff',
+                            border: 'none',
+                            padding: '0.5rem 1rem',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                        }}
+                    >
+                        {isHebrew ? 'התנתק' : 'Logout'}
+                    </button>
+                    <button
+                        onClick={toggleLanguage}
+                        style={{
+                            padding: '0.5rem 1rem',
+                            background: '#333',
+                            color: '#fff',
+                            border: '1px solid #888',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                        }}
+                    >
+                        {lang === 'he' ? 'English' : 'עברית'}
+                    </button>
+                </nav>
+            </div>
+
+
         </div>
     );
 }
