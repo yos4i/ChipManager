@@ -6,8 +6,8 @@ import { auth, createRoom, createTournament } from './firebase';
 import LoginPage from './components/LoginPage';
 import HomePage from './components/HomePage';
 import HistoryPage from './components/HistoryPage';
-import RoomPage from './components/RoomPage';
-import TournamentPage from './components/TournamentPage'; // חדש
+import RoomPage from './components/CashGame/RoomPage.jsx';
+import TournamentPage from './components/TournamentGame/TournamentPage.jsx'; // חדש
 
 export default function AppRoutes() {
     const [uid, setUid] = useState(null);

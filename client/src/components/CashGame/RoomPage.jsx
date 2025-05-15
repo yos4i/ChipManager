@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { auth, database, ref, get, onValue, update } from '../firebase';
+import { auth, database, ref, get, onValue, update } from '../../firebase.js';
 
-import PlayersTable from './PlayersTable';
-import AddPlayerForm from './AddPlayerForm';
-import HistoryList from './HistoryList';
+import PlayersTable from './PlayersTable.jsx';
+import AddPlayerForm from './AddPlayerForm.jsx';
+import HistoryList from './HistoryList.jsx';
 
 export default function RoomPage() {
     const { roomId } = useParams();

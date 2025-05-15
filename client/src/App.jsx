@@ -6,9 +6,9 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LoginPage from './components/LoginPage.jsx';
 import HomePage from './components/HomePage';
 import HistoryPage from './components/HistoryPage.jsx';
-import AddPlayerForm from "./components/AddPlayerForm";
-import RoomPage from "./components/RoomPage.jsx";
-import HistoryList from "./components/HistoryList";
+import AddPlayerForm from "./components/CashGame/AddPlayerForm.jsx";
+import RoomPage from "./components/CashGame/RoomPage.jsx";
+import HistoryList from "./components/CashGame/HistoryList.jsx";
 
 import {
   database,

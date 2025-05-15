@@ -11,3 +11,14 @@
     background-color: #d4af37;
     border-radius: 4px;
 }
+@media (max-width: 768px) {
+    .tournament-timer {
+        order: 1;
+    }
+    .tournament-stages {
+        order: 2;
+    }
+    .tournament-players {
+        order: 3;
+    }
+}
