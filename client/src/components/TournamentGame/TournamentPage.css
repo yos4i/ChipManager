@@ -1,0 +1,52 @@
+.tournament-layout {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    gap: 2rem;
+    max-width: 1400px;
+}
+
+.tournament-layout > .tournament-timer {
+    flex: 1 1 100%;
+    order: 2;
+}
+
+.tournament-layout > .tournament-stages {
+    flex: 1 1 400px;
+    min-width: 300px;
+    order: 1;
+}
+
+.tournament-layout > .tournament-players {
+    flex: 1 1 400px;
+    min-width: 300px;
+    background: #1a1a1a;
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+    max-height: 600px;
+    overflow-y: auto;
+    order: 3;
+}
+
+/* רספונסיבי - טלפון */
+@media (max-width: 768px) {
+    .tournament-layout {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .tournament-layout > .tournament-timer {
+        order: 1;
+    }
+
+    .tournament-layout > .tournament-stages {
+        order: 2;
+    }
+
+    .tournament-layout > .tournament-players {
+        order: 3;
+    }
+}

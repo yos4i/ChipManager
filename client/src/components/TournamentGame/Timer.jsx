@@ -39,12 +39,12 @@ export default function Timer({
 
 
             {/* בליינדים */}
-            <div style={{ fontSize: '6.5rem', fontWeight: 'bold', color: '#d4af37', WebkitTextStroke: '1px white'}}>
+            <div style={{ fontSize: '6.5rem', fontWeight: 'bold', color: '#d4af37', WebkitTextStroke: '0.5px white'}}>
                 {currentStage && !currentStage.break && typeof currentStage.smallBlind === 'number'
                     ? `Small ${currentStage.smallBlind}`
                     : ' הפסקה'}
             </div>
-            <div style={{ fontSize: '6.5rem', fontWeight: 'bold', color: '#d4af37', WebkitTextStroke: '1px white' }}>
+            <div style={{ fontSize: '6.5rem', fontWeight: 'bold', color: '#d4af37', WebkitTextStroke: '0.5px white' }}>
                 {currentStage && !currentStage.break ? `Big ${currentStage.bigBlind}` : ''}
             </div>
 
