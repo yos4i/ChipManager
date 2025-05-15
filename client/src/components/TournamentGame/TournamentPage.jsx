@@ -41,7 +41,7 @@ export default function TournamentPage() {
     const [players, setPlayers] = useState([]);
 
     useEffect(() => {
-        const playersRef = ref(database, `rooms/${tournamentId}/players`);
+        const playersRef = ref(database, `tournaments/${tournamentId}/players`);
         const unsubscribe = onValue(playersRef, (snapshot) => {
             const data = snapshot.val();
             if (data) {
