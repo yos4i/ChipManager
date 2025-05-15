@@ -215,7 +215,7 @@ export default function TournamentPage() {
             eliminated: false
         };
 
-        const playerRef = push(ref(database, `rooms/${tournamentId}/players`));
+        const playerRef = push(ref(database, `tournaments/${tournamentId}/players`));
         set(playerRef, newPlayer);
 
         setNewPlayerName('');
@@ -224,7 +224,8 @@ export default function TournamentPage() {
     };
 
     const toggleElimination = (player) => {
-        const playerRef = ref(database, `rooms/${tournamentId}/players/${player.id}`);
+        const playerRef = ref(database, `tournaments/${tournamentId}/players`)
+        ;
         update(playerRef, { eliminated: !player.eliminated });
         setMessage(!player.eliminated ? '🛑 השחקן סומן כהודח' : '✅ השחקן חזר למשחק');
     };
