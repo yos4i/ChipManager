@@ -224,7 +224,7 @@ export default function TournamentPage() {
     };
 
     const toggleElimination = (player) => {
-        const playerRef = ref(database, `tournaments/${tournamentId}/players`)
+        const playerRef = ref(database, `tournaments/${tournamentId}/players/${player.id}`);
         ;
         update(playerRef, { eliminated: !player.eliminated });
         setMessage(!player.eliminated ? '🛑 השחקן סומן כהודח' : '✅ השחקן חזר למשחק');
