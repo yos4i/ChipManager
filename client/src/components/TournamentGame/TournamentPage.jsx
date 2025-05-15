@@ -1,6 +1,7 @@
 //Packages
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { database, ref, onValue, set, push, update } from '../../firebase';
 
 //Inner Components
 import Timer from './Timer';
@@ -37,10 +38,24 @@ export default function TournamentPage() {
     const stageAdvancePending = useRef(false);
 
     //Players
-    const [players, setPlayers] = useState(() => {
-        const saved = localStorage.getItem(`players-${tournamentId}`);
-        return saved ? JSON.parse(saved) : [];
-    });
+    const [players, setPlayers] = useState([]);
+
+    useEffect(() => {
+        const playersRef = ref(database, `rooms/${tournamentId}/players`);
+        const unsubscribe = onValue(playersRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                const playerList = Object.entries(data).map(([id, value]) => ({ id, ...value }));
+                setPlayers(playerList);
+            } else {
+                setPlayers([]);
+            }
+        });
+
+        return () => unsubscribe();
+    }, [tournamentId]);
+
+
 
     //Current Stage
     const [currentStageIndex, setCurrentStageIndex] = useState(() => Number(localStorage.getItem('currentStageIndex') || 0));
@@ -87,19 +102,8 @@ export default function TournamentPage() {
     useEffect(() => {
         localStorage.setItem('totalSecondsPassed', totalSecondsPassed);
     }, [totalSecondsPassed]);
-    useEffect(() => {
-        localStorage.setItem(`players-${tournamentId}`, JSON.stringify(players));
-    }, [players, tournamentId]);
-    const startTournament = () => {
-        if (players.length === 0) {
-            setMessage('❌ יש להוסיף שחקנים לפני התחלת הטורניר');
-            return;
-        }
-        if (stages.length === 0) {
-            setMessage('❌ יש להוסיף שלבים לפני התחלת הטורניר');
-            return;
-        }
 
+    const startTournament = () => {
         setSpeechAllowed(true); // מרשה לדבר
         setTournamentStarted(true); // מתחיל את הטורניר
         setIsPaused(false); // מפעיל את הטיימר
@@ -200,26 +204,30 @@ export default function TournamentPage() {
             setIsPaused(prev => !prev);
         };
     const addPlayer = () => {
-            if (!newPlayerName.trim()) {
-                setMessage('❌ יש להכניס שם שחקן');
-                return;
-            }
-            const newPlayer = {
-                name: newPlayerName,
-                image: newPlayerImage,
-                eliminated: false
-            };
-            setPlayers(prev => [...prev, newPlayer]);
-            setNewPlayerName('');
-            setNewPlayerImage(null);
-            setMessage('✅ שחקן נוסף בהצלחה!');
+        if (!newPlayerName.trim()) {
+            setMessage('❌ יש להכניס שם שחקן');
+            return;
+        }
+
+        const newPlayer = {
+            name: newPlayerName,
+            image: newPlayerImage,
+            eliminated: false
         };
-    const toggleElimination = (index) => {
-            const updatedPlayers = [...players];
-            updatedPlayers[index].eliminated = !updatedPlayers[index].eliminated;
-            setPlayers(updatedPlayers);
-            setMessage(updatedPlayers[index].eliminated ? '🛑 השחקן סומן כהודח' : '✅ השחקן חזר למשחק');
-        };
+
+        const playerRef = push(ref(database, `rooms/${tournamentId}/players`));
+        set(playerRef, newPlayer);
+
+        setNewPlayerName('');
+        setNewPlayerImage(null);
+        setMessage('✅ שחקן נוסף בהצלחה!');
+    };
+
+    const toggleElimination = (player) => {
+        const playerRef = ref(database, `rooms/${tournamentId}/players/${player.id}`);
+        update(playerRef, { eliminated: !player.eliminated });
+        setMessage(!player.eliminated ? '🛑 השחקן סומן כהודח' : '✅ השחקן חזר למשחק');
+    };
     const startEditStage = (index) => {
         const stage = stages[index];
         setEditIndex(index);
