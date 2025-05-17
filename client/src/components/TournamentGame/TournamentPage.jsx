@@ -1,4 +1,4 @@
-// Refactored TournamentPage.js
+// Fully Refactored TournamentPage.js with Isolated Firebase Data
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { database, ref, onValue, set, push, update, get } from '../../firebase';
@@ -14,19 +14,33 @@ import PlayersList from './PlayersList';
 // Style
 import './TournamentPage.css';
 
-// Constants
-const defaultStages = [];
-
 export default function TournamentPage() {
     const { tournamentId } = useParams();
     const navigate = useNavigate();
     const [debugLog, setDebugLog] = useState('');
 
-    // Stages
-    const [stages, setStages] = useState(() => {
-        const savedTemplate = localStorage.getItem('tournamentTemplate');
-        return savedTemplate ? JSON.parse(savedTemplate) : defaultStages;
+    // Tournament State
+    const [tournamentData, setTournamentData] = useState({
+        stages: [],
+        currentStageIndex: 0,
+        secondsLeft: 0,
+        totalSecondsPassed: 0,
+        tournamentStarted: false,
+        isPaused: true
     });
+
+    // Extract values from tournamentData for easier access
+    const {
+        stages,
+        currentStageIndex,
+        secondsLeft,
+        totalSecondsPassed,
+        tournamentStarted,
+        isPaused
+    } = tournamentData;
+
+    // Current stage reference
+    const currentStage = stages[currentStageIndex];
 
     // Countdown
     const countdownSound = useRef(new Audio('/countdown.mp3'));
@@ -34,28 +48,15 @@ export default function TournamentPage() {
 
     // Other States
     const [speechAllowed, setSpeechAllowed] = useState(false);
-    const [tournamentStarted, setTournamentStarted] = useState(false);
     const [voices, setVoices] = useState([]);
     const stageAdvancePending = useRef(false);
 
     // Players
     const [players, setPlayers] = useState([]);
 
-    // Current Stage
-    const [currentStageIndex, setCurrentStageIndex] = useState(() =>
-        Number(localStorage.getItem('currentStageIndex') || 0)
-    );
-
-    // State Manage
-    const [secondsLeft, setSecondsLeft] = useState(() =>
-        Number(localStorage.getItem('secondsLeft') || 0)
-    );
-    const [totalSecondsPassed, setTotalSecondsPassed] = useState(() =>
-        Number(localStorage.getItem('totalSecondsPassed') || 0)
-    );
+    // Form States
     const [newPlayerName, setNewPlayerName] = useState('');
     const [newPlayerImage, setNewPlayerImage] = useState(null);
-    const [isPaused, setIsPaused] = useState(false);
     const [message, setMessage] = useState('');
     const [newStage, setNewStage] = useState({ smallBlind: '', bigBlind: '', ante: '', duration: '' });
     const [editIndex, setEditIndex] = useState(null);
@@ -64,13 +65,69 @@ export default function TournamentPage() {
     const [showStageForm, setShowStageForm] = useState(false);
     const [customTemplateName, setCustomTemplateName] = useState('');
 
-    const currentStage = stages[currentStageIndex];
-
-    // Initialize Firebase listeners
+    // Initialize or load tournament data
     useEffect(() => {
-        // Players listener
+        const loadTournamentData = async () => {
+            try {
+                // Check if tournament exists
+                const tournamentRef = ref(database, `tournaments/${tournamentId}`);
+                const snapshot = await get(tournamentRef);
+
+                if (!snapshot.exists()) {
+                    // Initialize tournament with default values if it doesn't exist
+                    await set(tournamentRef, {
+                        stages: [],
+                        currentStageIndex: 0,
+                        secondsLeft: 0,
+                        totalSecondsPassed: 0,
+                        tournamentStarted: false,
+                        isPaused: true,
+                        createdAt: Date.now()
+                    });
+
+                    setDebugLog("Created new tournament room");
+                }
+            } catch (error) {
+                console.error("Error initializing tournament data:", error);
+                setDebugLog(`Error: ${error.message}`);
+            }
+        };
+
+        loadTournamentData();
+    }, [tournamentId]);
+
+    // Set up Firebase listeners for tournament data
+    useEffect(() => {
+        const tournamentRef = ref(database, `tournaments/${tournamentId}`);
+
+        const unsubscribe = onValue(tournamentRef, (snapshot) => {
+            try {
+                const data = snapshot.val();
+                if (!data) return;
+
+                // Update tournament data states
+                setTournamentData(prevData => ({
+                    stages: data.stages || prevData.stages,
+                    currentStageIndex: typeof data.currentStageIndex === 'number' ? data.currentStageIndex : prevData.currentStageIndex,
+                    secondsLeft: typeof data.secondsLeft === 'number' ? data.secondsLeft : prevData.secondsLeft,
+                    totalSecondsPassed: typeof data.totalSecondsPassed === 'number' ? data.totalSecondsPassed : prevData.totalSecondsPassed,
+                    tournamentStarted: Boolean(data.tournamentStarted),
+                    isPaused: typeof data.isPaused === 'boolean' ? data.isPaused : prevData.isPaused
+                }));
+            } catch (error) {
+                console.error("Error processing tournament data:", error);
+                setDebugLog(`Error loading tournament data: ${error.message}`);
+            }
+        });
+
+        return () => unsubscribe();
+    }, [tournamentId]);
+
+    // Players listener
+    useEffect(() => {
         const playersRef = ref(database, `tournaments/${tournamentId}/players`);
-        const unsubscribePlayers = onValue(playersRef, (snapshot) => {
+
+        const unsubscribe = onValue(playersRef, (snapshot) => {
             try {
                 const data = snapshot.val();
                 if (data) {
@@ -85,58 +142,7 @@ export default function TournamentPage() {
             }
         });
 
-        // Stages listener
-        const stagesRef = ref(database, `tournaments/${tournamentId}/stages`);
-        const unsubscribeStages = onValue(stagesRef, (snapshot) => {
-            try {
-                const data = snapshot.val();
-                if (data) setStages(data);
-            } catch (error) {
-                console.error("Error processing stages data:", error);
-            }
-        });
-
-        // Current index listener
-        const indexRef = ref(database, `tournaments/${tournamentId}/currentStageIndex`);
-        const unsubscribeIndex = onValue(indexRef, (snapshot) => {
-            try {
-                const data = snapshot.val();
-                if (typeof data === 'number') setCurrentStageIndex(data);
-            } catch (error) {
-                console.error("Error processing current stage index:", error);
-            }
-        });
-
-        // Seconds left listener
-        const secondsRef = ref(database, `tournaments/${tournamentId}/secondsLeft`);
-        const unsubscribeSeconds = onValue(secondsRef, (snapshot) => {
-            try {
-                const data = snapshot.val();
-                if (typeof data === 'number') setSecondsLeft(data);
-            } catch (error) {
-                console.error("Error processing seconds left:", error);
-            }
-        });
-
-        // Total seconds passed listener
-        const totalRef = ref(database, `tournaments/${tournamentId}/totalSecondsPassed`);
-        const unsubscribeTotal = onValue(totalRef, (snapshot) => {
-            try {
-                const data = snapshot.val();
-                if (typeof data === 'number') setTotalSecondsPassed(data);
-            } catch (error) {
-                console.error("Error processing total seconds passed:", error);
-            }
-        });
-
-        // Clean up all listeners on component unmount
-        return () => {
-            unsubscribePlayers();
-            unsubscribeStages();
-            unsubscribeIndex();
-            unsubscribeSeconds();
-            unsubscribeTotal();
-        };
+        return () => unsubscribe();
     }, [tournamentId]);
 
     // Speech synthesis initialization
@@ -155,70 +161,43 @@ export default function TournamentPage() {
         };
     }, []);
 
-    // Save stages to localStorage when they change
-    useEffect(() => {
-        localStorage.setItem('tournamentTemplate', JSON.stringify(stages));
-    }, [stages]);
-
-    // Sync current stage index to Firebase
-    useEffect(() => {
-        try {
-            set(ref(database, `tournaments/${tournamentId}/currentStageIndex`), currentStageIndex);
-        } catch (error) {
-            console.error("Failed to update currentStageIndex in Firebase:", error);
-        }
-    }, [currentStageIndex, tournamentId]);
-
-    // Sync seconds left to Firebase
-    useEffect(() => {
-        try {
-            set(ref(database, `tournaments/${tournamentId}/secondsLeft`), secondsLeft);
-        } catch (error) {
-            console.error("Failed to update secondsLeft in Firebase:", error);
-        }
-    }, [secondsLeft, tournamentId]);
-
-    // Sync total seconds passed to Firebase
-    useEffect(() => {
-        try {
-            set(ref(database, `tournaments/${tournamentId}/totalSecondsPassed`), totalSecondsPassed);
-        } catch (error) {
-            console.error("Failed to update totalSecondsPassed in Firebase:", error);
-        }
-    }, [totalSecondsPassed, tournamentId]);
-
     // Timer logic
     useEffect(() => {
         if (!tournamentStarted) return;
 
         const interval = setInterval(() => {
-            setTotalSecondsPassed(prev => prev + 1);
+            try {
+                // Update totalSecondsPassed
+                updateTournamentField('totalSecondsPassed', prev => prev + 1);
 
-            if (!isPaused) {
-                setSecondsLeft(prev => {
-                    if (prev === 4 && !countdownPlayed) {
-                        try {
-                            countdownSound.current.play()
-                                .catch(err => console.error("Failed to play countdown sound:", err));
-                            setCountdownPlayed(true);
-                        } catch (error) {
-                            console.error("Error playing countdown sound:", error);
+                if (!isPaused) {
+                    updateTournamentField('secondsLeft', prev => {
+                        if (prev === 4 && !countdownPlayed) {
+                            try {
+                                countdownSound.current.play()
+                                    .catch(err => console.error("Failed to play countdown sound:", err));
+                                setCountdownPlayed(true);
+                            } catch (error) {
+                                console.error("Error playing countdown sound:", error);
+                            }
                         }
-                    }
 
-                    if (prev > 0) return prev - 1;
+                        if (prev > 0) return prev - 1;
 
-                    if (!stageAdvancePending.current) {
-                        stageAdvancePending.current = true;
+                        if (!stageAdvancePending.current) {
+                            stageAdvancePending.current = true;
 
-                        // Delay advancing to next stage
-                        setTimeout(() => {
-                            advanceStage();
-                        }, 500);
-                    }
+                            // Delay advancing to next stage
+                            setTimeout(() => {
+                                advanceStage();
+                            }, 500);
+                        }
 
-                    return 0;
-                });
+                        return 0;
+                    });
+                }
+            } catch (error) {
+                console.error("Error in timer interval:", error);
             }
         }, 1000);
 
@@ -235,6 +214,37 @@ export default function TournamentPage() {
             speak(`שמאל ${currentStage.smallBlind}, ביג ${currentStage.bigBlind}`);
         }
     }, [currentStageIndex, speechAllowed, currentStage, tournamentStarted]);
+
+    // Update a single tournament field in Firebase
+    const updateTournamentField = useCallback(async (field, valueOrUpdater) => {
+        try {
+            const fieldRef = ref(database, `tournaments/${tournamentId}/${field}`);
+
+            // Handle function updater or direct value
+            let newValue;
+            if (typeof valueOrUpdater === 'function') {
+                const snapshot = await get(fieldRef);
+                const currentValue = snapshot.exists() ? snapshot.val() : 0;
+                newValue = valueOrUpdater(currentValue);
+            } else {
+                newValue = valueOrUpdater;
+            }
+
+            await set(fieldRef, newValue);
+
+            // Also update local state
+            setTournamentData(prev => ({
+                ...prev,
+                [field]: newValue
+            }));
+
+            return newValue;
+        } catch (error) {
+            console.error(`Error updating ${field}:`, error);
+            setDebugLog(`Failed to update ${field}: ${error.message}`);
+            return null;
+        }
+    }, [tournamentId]);
 
     // Speech synthesis function
     const speak = useCallback((text) => {
@@ -260,28 +270,42 @@ export default function TournamentPage() {
     }, [speechAllowed, voices]);
 
     // Start tournament function
-    const startTournament = () => {
-        setSpeechAllowed(true);
-        setTournamentStarted(true);
-        setIsPaused(false);
-        setMessage('✅ הטורניר התחיל! בהצלחה לכולם');
+    const startTournament = async () => {
+        try {
+            await updateTournamentField('tournamentStarted', true);
+            await updateTournamentField('isPaused', false);
+            setSpeechAllowed(true);
+
+            // If there are stages and secondsLeft is 0, initialize it
+            if (stages.length > 0 && secondsLeft === 0) {
+                await updateTournamentField('secondsLeft', stages[0].duration * 60);
+            }
+
+            setMessage('✅ הטורניר התחיל! בהצלחה לכולם');
+        } catch (error) {
+            console.error("Error starting tournament:", error);
+            setMessage(`❌ שגיאה בהתחלת הטורניר: ${error.message}`);
+        }
     };
 
     // Advance to next stage
-    const advanceStage = () => {
-        setCurrentStageIndex(prev => {
-            const nextIndex = prev + 1;
+    const advanceStage = async () => {
+        try {
+            const nextIndex = currentStageIndex + 1;
+
             if (nextIndex < stages.length) {
-                setSecondsLeft(stages[nextIndex].duration * 60);
+                await updateTournamentField('currentStageIndex', nextIndex);
+                await updateTournamentField('secondsLeft', stages[nextIndex].duration * 60);
                 setCountdownPlayed(false);
                 stageAdvancePending.current = false;
-                return nextIndex;
             } else {
                 alert('הטורניר הסתיים!');
                 navigate('/');
-                return prev;
             }
-        });
+        } catch (error) {
+            console.error("Error advancing stage:", error);
+            setDebugLog(`Error advancing stage: ${error.message}`);
+        }
     };
 
     // Format time function
@@ -300,22 +324,40 @@ export default function TournamentPage() {
     };
 
     // Jump to position in timer
-    const jumpToPosition = (e) => {
+    const jumpToPosition = async (e) => {
         try {
+            if (!currentStage) return;
+
             const bar = e.target;
             const rect = bar.getBoundingClientRect();
             const clickX = e.clientX - rect.left;
             const newProgress = clickX / rect.width;
             const totalSeconds = currentStage.duration * 60;
-            setSecondsLeft(Math.max(0, totalSeconds - Math.floor(newProgress * totalSeconds)));
+            const newSecondsLeft = Math.max(0, totalSeconds - Math.floor(newProgress * totalSeconds));
+
+            await updateTournamentField('secondsLeft', newSecondsLeft);
         } catch (error) {
             console.error("Error in jumpToPosition:", error);
         }
     };
 
     // Toggle pause
-    const togglePause = () => {
-        setIsPaused(prev => !prev);
+    const togglePause = async () => {
+        try {
+            await updateTournamentField('isPaused', !isPaused);
+        } catch (error) {
+            console.error("Error toggling pause:", error);
+        }
+    };
+
+    // Set stages
+    const updateStages = async (newStages) => {
+        try {
+            await set(ref(database, `tournaments/${tournamentId}/stages`), newStages);
+        } catch (error) {
+            console.error("Error updating stages:", error);
+            setDebugLog(`Failed to update stages: ${error.message}`);
+        }
     };
 
     // Add player function
@@ -352,7 +394,7 @@ export default function TournamentPage() {
         }
     };
 
-    // Toggle elimination function - FIXED
+    // Toggle elimination function
     const toggleElimination = async (playerId) => {
         try {
             if (!playerId) {
@@ -386,6 +428,8 @@ export default function TournamentPage() {
 
     // Start editing stage
     const startEditStage = (index) => {
+        if (!stages[index]) return;
+
         const stage = stages[index];
         setEditIndex(index);
         setEditingMode(true);
@@ -449,7 +493,7 @@ export default function TournamentPage() {
                             setLastClickedIndex={setLastClickedIndex}
                             setEditingMode={setEditingMode}
                             setShowStageForm={setShowStageForm}
-                            setStages={setStages}
+                            setStages={updateStages}  // Use Firebase updater
                             stages={stages}
                             setMessage={setMessage}
                             buttonStyle={buttonStyle}
@@ -478,9 +522,9 @@ export default function TournamentPage() {
                         customTemplateName={customTemplateName}
                         setCustomTemplateName={setCustomTemplateName}
                         stages={stages}
-                        setStages={setStages}
-                        setCurrentStageIndex={setCurrentStageIndex}
-                        setSecondsLeft={setSecondsLeft}
+                        setStages={updateStages}  // Use Firebase updater
+                        setCurrentStageIndex={(index) => updateTournamentField('currentStageIndex', index)}
+                        setSecondsLeft={(seconds) => updateTournamentField('secondsLeft', seconds)}
                         setMessage={setMessage}
                         tournamentStarted={tournamentStarted}
                         buttonStyle={buttonStyle}
