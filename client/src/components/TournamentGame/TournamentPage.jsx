@@ -135,6 +135,21 @@ export default function TournamentPage() {
             if (nextIndex < stages.length) {
                 await updateTournamentField('currentStageIndex', nextIndex);
                 await updateTournamentField('secondsLeft', stages[nextIndex].duration * 60);
+                const nextStage = stages[nextIndex];
+                const speechRef = ref(database, `tournaments/${tournamentId}/speechQueue`);
+
+                if (nextStage.break) {
+                    await set(speechRef, {
+                        message: "הפסקה",
+                        timestamp: Date.now()
+                    });
+                } else {
+                    await set(speechRef, {
+                        message: `שמאל ${nextStage.smallBlind}, ביג ${nextStage.bigBlind}`,
+                        timestamp: Date.now()
+                    });
+                }
+
                 setCountdownPlayed(false);
                 stageAdvancePending.current = false;
                 // Reset the stage announcement flag when advancing
@@ -420,6 +435,24 @@ export default function TournamentPage() {
             console.error("Error toggling player elimination:", error);
         }
     };
+
+    useEffect(() => {
+        if (!speechAllowed) return;
+
+        const speechRef = ref(database, `tournaments/${tournamentId}/speechQueue`);
+        let lastSpoken = 0;
+
+        const unsubscribe = onValue(speechRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data && data.timestamp > lastSpoken) {
+                lastSpoken = data.timestamp;
+                speak(data.message);
+            }
+        });
+
+        return () => unsubscribe();
+    }, [tournamentId, speechAllowed, speak]);
+
     useEffect(() => {
         const enableSpeech = () => {
             console.log('👂 הפעלת קריינות אוטומטית'); // לבדיקה
@@ -455,22 +488,22 @@ export default function TournamentPage() {
     }, [tournamentId, speechAllowed, speak]);
 
 
-    useEffect(() => {
-        if (!tournamentStarted || !speechAllowed || !currentStage) return;
-
-        // Only speak if we haven't announced this stage yet
-        if (!stageAnnouncementRef.current) {
-            if (currentStage.break) {
-                speak('הפסקה');
-            } else if (typeof currentStage.smallBlind === 'number' && typeof currentStage.bigBlind === 'number') {
-                speak(`שמאל ${currentStage.smallBlind}, ביג ${currentStage.bigBlind}`);
-            }
-            // Mark this stage as announced
-            stageAnnouncementRef.current = true;
-        }
-
-        // This effect depends on speak
-    }, [currentStageIndex, speechAllowed, currentStage, tournamentStarted, speak]);
+    // useEffect(() => {
+    //     if (!tournamentStarted || !speechAllowed || !currentStage) return;
+    //
+    //     // Only speak if we haven't announced this stage yet
+    //     if (!stageAnnouncementRef.current) {
+    //         if (currentStage.break) {
+    //             speak('הפסקה');
+    //         } else if (typeof currentStage.smallBlind === 'number' && typeof currentStage.bigBlind === 'number') {
+    //             speak(`שמאל ${currentStage.smallBlind}, ביג ${currentStage.bigBlind}`);
+    //         }
+    //         // Mark this stage as announced
+    //         stageAnnouncementRef.current = true;
+    //     }
+    //
+    //     // This effect depends on speak
+    // }, [currentStageIndex, speechAllowed, currentStage, tournamentStarted, speak]);
 
 
     // Start editing stage
