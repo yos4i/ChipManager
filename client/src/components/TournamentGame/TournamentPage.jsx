@@ -176,7 +176,6 @@ export default function TournamentPage() {
 
         loadTournamentData();
         // We intentionally don't include the async function in dependencies
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tournamentId]);
 
     // Set up Firebase listeners for tournament data
@@ -397,29 +396,64 @@ export default function TournamentPage() {
     // Toggle elimination function
     const toggleElimination = async (playerId) => {
         try {
-
-            // First verify the player exists in the database
             const playerRef = ref(database, `tournaments/${tournamentId}/players/${playerId}`);
             const snapshot = await get(playerRef);
 
-            if (!snapshot.exists()) {
-                return;
-            }
+            if (!snapshot.exists()) return;
 
             const playerData = snapshot.val();
+            const newStatus = !playerData.eliminated;
 
-            // Update elimination status
             await update(playerRef, {
-                eliminated: !playerData.eliminated
+                eliminated: newStatus
             });
-            if (!playerData.eliminated) {
-                speak(`${playerData.name} הודח`);
+
+            // רק אם הודח עכשיו – שלח "אירוע דיבור" לפיירבייס
+            if (newStatus) {
+                await set(ref(database, `tournaments/${tournamentId}/eliminationSpeech`), {
+                    name: playerData.name,
+                    timestamp: Date.now()
+                });
             }
 
         } catch (error) {
             console.error("Error toggling player elimination:", error);
         }
     };
+    useEffect(() => {
+        const enableSpeech = () => {
+            console.log('👂 הפעלת קריינות אוטומטית'); // לבדיקה
+            setSpeechAllowed(true);
+            window.removeEventListener('click', enableSpeech);
+        };
+
+        window.addEventListener('click', enableSpeech);
+
+        return () => {
+            window.removeEventListener('click', enableSpeech);
+        };
+    }, []);
+
+
+    useEffect(() => {
+        if (!speechAllowed) return;
+
+        const refSpeech = ref(database, `tournaments/${tournamentId}/eliminationSpeech`);
+        let lastTimestamp = 0;
+
+        const unsubscribe = onValue(refSpeech, (snapshot) => {
+            const data = snapshot.val();
+            if (data && data.timestamp > lastTimestamp) {
+                lastTimestamp = data.timestamp;
+                if (data.name) {
+                    speak(`${data.name} הודח`);
+                }
+            }
+        });
+
+        return () => unsubscribe();
+    }, [tournamentId, speechAllowed, speak]);
+
 
     useEffect(() => {
         if (!tournamentStarted || !speechAllowed || !currentStage) return;
@@ -436,7 +470,6 @@ export default function TournamentPage() {
         }
 
         // This effect depends on speak
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentStageIndex, speechAllowed, currentStage, tournamentStarted, speak]);
 
 
@@ -556,6 +589,13 @@ export default function TournamentPage() {
             >
                 חזרה לעמוד הבית
             </button>
+
+            {!speechAllowed && (
+                <button onClick={() => setSpeechAllowed(true)} style={buttonStyle}>
+                    🎙️ הפעל קריינות
+                </button>
+            )}
+
         </div>
     );
 }
