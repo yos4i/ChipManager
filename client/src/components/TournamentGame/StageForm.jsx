@@ -13,9 +13,9 @@ export default function StageForm({
                                       setStages,
                                       stages,
                                       setMessage,
-                                      buttonStyle,
+                                      buttonStyle
                                   }) {
-    const addStage = () => {
+    const addStage = async () => {
         if (!newStage.duration) {
             setMessage('❌ יש להזין זמן שלב או הפסקה');
             setEditingMode(false);
@@ -33,21 +33,23 @@ export default function StageForm({
                 duration: Number(newStage.duration),
             };
 
+        let updatedStages = [...stages];
+
         if (editingMode && editIndex !== null) {
-            const updatedStages = [...stages];
             updatedStages[editIndex] = stage;
-            setStages(updatedStages);
             setMessage('✅ שלב עודכן בהצלחה');
         } else if (lastClickedIndex !== null) {
-            const updatedStages = [...stages];
             updatedStages.splice(lastClickedIndex + 1, 0, stage);
-            setStages(updatedStages);
             setMessage(isBreak ? '☕ הפסקה נוספה לאחר שלב נבחר' : '✅ שלב נוסף לאחר שלב נבחר');
         } else {
-            setStages(prev => [...prev, stage]);
+            updatedStages.push(stage);
             setMessage(isBreak ? '☕ הפסקה נוספה' : '✅ שלב נוסף בהצלחה');
         }
 
+        // שמירה בפועל ל־Firebase
+        await setStages(updatedStages);
+
+        // איפוס מצבים
         setNewStage({ smallBlind: '', bigBlind: '', ante: '', duration: '' });
         setEditIndex(null);
         setLastClickedIndex(null);

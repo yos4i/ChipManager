@@ -1,4 +1,4 @@
-// Fully Refactored TournamentPage.js with Isolated Firebase Data
+// Fully Refactored TournamentPage.js with Fixed ESLint Warnings and Speech Issue
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { database, ref, onValue, set, push, update, get } from '../../firebase';
@@ -17,7 +17,6 @@ import './TournamentPage.css';
 export default function TournamentPage() {
     const { tournamentId } = useParams();
     const navigate = useNavigate();
-    const [debugLog, setDebugLog] = useState('');
 
     // Tournament State
     const [tournamentData, setTournamentData] = useState({
@@ -42,17 +41,27 @@ export default function TournamentPage() {
     // Current stage reference
     const currentStage = stages[currentStageIndex];
 
-    // Countdown
+    // Refs - defined at component level (not inside hooks)
     const countdownSound = useRef(new Audio('/countdown.mp3'));
+    const stageAdvancePending = useRef(false);
+    const stageAnnouncementRef = useRef(false);
+
+    // Countdown
     const [countdownPlayed, setCountdownPlayed] = useState(false);
 
     // Other States
     const [speechAllowed, setSpeechAllowed] = useState(false);
     const [voices, setVoices] = useState([]);
-    const stageAdvancePending = useRef(false);
 
     // Players
     const [players, setPlayers] = useState([]);
+    const startAddStage = () => {
+        setEditingMode(false);
+        setEditIndex(null);
+        setLastClickedIndex(null);
+        setNewStage({ smallBlind: '', bigBlind: '', ante: '', duration: '' });
+        setShowStageForm(true);
+    };
 
     // Form States
     const [newPlayerName, setNewPlayerName] = useState('');
@@ -64,6 +73,80 @@ export default function TournamentPage() {
     const [editingMode, setEditingMode] = useState(false);
     const [showStageForm, setShowStageForm] = useState(false);
     const [customTemplateName, setCustomTemplateName] = useState('');
+
+    // Update a single tournament field in Firebase
+    const updateTournamentField = useCallback(async (field, valueOrUpdater) => {
+        try {
+            const fieldRef = ref(database, `tournaments/${tournamentId}/${field}`);
+
+            // Handle function updater or direct value
+            let newValue;
+            if (typeof valueOrUpdater === 'function') {
+                const snapshot = await get(fieldRef);
+                const currentValue = snapshot.exists() ? snapshot.val() : 0;
+                newValue = valueOrUpdater(currentValue);
+            } else {
+                newValue = valueOrUpdater;
+            }
+
+            await set(fieldRef, newValue);
+
+            // Also update local state
+            setTournamentData(prev => ({
+                ...prev,
+                [field]: newValue
+            }));
+
+            return newValue;
+        } catch (error) {
+            console.error(`Error updating ${field}:`, error);
+            return null;
+        }
+    }, [tournamentId]);
+
+    // Speech synthesis function
+    const speak = useCallback((text) => {
+        if (!speechAllowed || !text) return;
+
+        try {
+            window.speechSynthesis.cancel(); // Stop any previous speech
+            const utterance = new SpeechSynthesisUtterance();
+            utterance.lang = 'he-IL';
+            utterance.text = text;
+
+            const hebrewVoice = voices.find(v => v.lang.includes('he') || v.lang.includes('iw'));
+
+            if (hebrewVoice) {
+                utterance.voice = hebrewVoice;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                console.log('No Hebrew voice found on this device');
+            }
+        } catch (error) {
+            console.error("Speech synthesis error:", error);
+        }
+    }, [speechAllowed, voices]);
+
+    // Advance to next stage - defined before being used in useEffect
+    const advanceStage = useCallback(async () => {
+        try {
+            const nextIndex = currentStageIndex + 1;
+
+            if (nextIndex < stages.length) {
+                await updateTournamentField('currentStageIndex', nextIndex);
+                await updateTournamentField('secondsLeft', stages[nextIndex].duration * 60);
+                setCountdownPlayed(false);
+                stageAdvancePending.current = false;
+                // Reset the stage announcement flag when advancing
+                stageAnnouncementRef.current = false;
+            } else {
+                alert('הטורניר הסתיים!');
+                navigate('/');
+            }
+        } catch (error) {
+            console.error("Error advancing stage:", error);
+        }
+    }, [currentStageIndex, navigate, stages, updateTournamentField]);
 
     // Initialize or load tournament data
     useEffect(() => {
@@ -85,15 +168,15 @@ export default function TournamentPage() {
                         createdAt: Date.now()
                     });
 
-                    setDebugLog("Created new tournament room");
                 }
             } catch (error) {
                 console.error("Error initializing tournament data:", error);
-                setDebugLog(`Error: ${error.message}`);
             }
         };
 
         loadTournamentData();
+        // We intentionally don't include the async function in dependencies
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tournamentId]);
 
     // Set up Firebase listeners for tournament data
@@ -116,7 +199,6 @@ export default function TournamentPage() {
                 }));
             } catch (error) {
                 console.error("Error processing tournament data:", error);
-                setDebugLog(`Error loading tournament data: ${error.message}`);
             }
         });
 
@@ -138,7 +220,6 @@ export default function TournamentPage() {
                 }
             } catch (error) {
                 console.error("Error processing players data:", error);
-                setDebugLog(`Error loading players: ${error.message}`);
             }
         });
 
@@ -202,72 +283,9 @@ export default function TournamentPage() {
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [tournamentStarted, isPaused, countdownPlayed]);
+    }, [tournamentStarted, isPaused, countdownPlayed, updateTournamentField, advanceStage]);
 
-    // Speech for current stage
-    useEffect(() => {
-        if (!tournamentStarted || !speechAllowed || !currentStage) return;
-
-        if (currentStage.break) {
-            speak('הפסקה');
-        } else if (typeof currentStage.smallBlind === 'number' && typeof currentStage.bigBlind === 'number') {
-            speak(`שמאל ${currentStage.smallBlind}, ביג ${currentStage.bigBlind}`);
-        }
-    }, [currentStageIndex, speechAllowed, currentStage, tournamentStarted]);
-
-    // Update a single tournament field in Firebase
-    const updateTournamentField = useCallback(async (field, valueOrUpdater) => {
-        try {
-            const fieldRef = ref(database, `tournaments/${tournamentId}/${field}`);
-
-            // Handle function updater or direct value
-            let newValue;
-            if (typeof valueOrUpdater === 'function') {
-                const snapshot = await get(fieldRef);
-                const currentValue = snapshot.exists() ? snapshot.val() : 0;
-                newValue = valueOrUpdater(currentValue);
-            } else {
-                newValue = valueOrUpdater;
-            }
-
-            await set(fieldRef, newValue);
-
-            // Also update local state
-            setTournamentData(prev => ({
-                ...prev,
-                [field]: newValue
-            }));
-
-            return newValue;
-        } catch (error) {
-            console.error(`Error updating ${field}:`, error);
-            setDebugLog(`Failed to update ${field}: ${error.message}`);
-            return null;
-        }
-    }, [tournamentId]);
-
-    // Speech synthesis function
-    const speak = useCallback((text) => {
-        if (!speechAllowed || !text) return;
-
-        try {
-            window.speechSynthesis.cancel(); // Stop any previous speech
-            const utterance = new SpeechSynthesisUtterance();
-            utterance.lang = 'he-IL';
-            utterance.text = text;
-
-            const hebrewVoice = voices.find(v => v.lang.includes('he') || v.lang.includes('iw'));
-
-            if (hebrewVoice) {
-                utterance.voice = hebrewVoice;
-                window.speechSynthesis.speak(utterance);
-            } else {
-                console.log('No Hebrew voice found on this device');
-            }
-        } catch (error) {
-            console.error("Speech synthesis error:", error);
-        }
-    }, [speechAllowed, voices]);
+    // Speech for current stage - FIXED to avoid infinite loop
 
     // Start tournament function
     const startTournament = async () => {
@@ -275,6 +293,8 @@ export default function TournamentPage() {
             await updateTournamentField('tournamentStarted', true);
             await updateTournamentField('isPaused', false);
             setSpeechAllowed(true);
+
+            stageAnnouncementRef.current = false; // 👈 חשוב!
 
             // If there are stages and secondsLeft is 0, initialize it
             if (stages.length > 0 && secondsLeft === 0) {
@@ -288,25 +308,6 @@ export default function TournamentPage() {
         }
     };
 
-    // Advance to next stage
-    const advanceStage = async () => {
-        try {
-            const nextIndex = currentStageIndex + 1;
-
-            if (nextIndex < stages.length) {
-                await updateTournamentField('currentStageIndex', nextIndex);
-                await updateTournamentField('secondsLeft', stages[nextIndex].duration * 60);
-                setCountdownPlayed(false);
-                stageAdvancePending.current = false;
-            } else {
-                alert('הטורניר הסתיים!');
-                navigate('/');
-            }
-        } catch (error) {
-            console.error("Error advancing stage:", error);
-            setDebugLog(`Error advancing stage: ${error.message}`);
-        }
-    };
 
     // Format time function
     const formatTime = (totalSeconds) => {
@@ -356,7 +357,6 @@ export default function TournamentPage() {
             await set(ref(database, `tournaments/${tournamentId}/stages`), newStages);
         } catch (error) {
             console.error("Error updating stages:", error);
-            setDebugLog(`Failed to update stages: ${error.message}`);
         }
     };
 
@@ -397,17 +397,12 @@ export default function TournamentPage() {
     // Toggle elimination function
     const toggleElimination = async (playerId) => {
         try {
-            if (!playerId) {
-                setDebugLog('❌ playerId is undefined');
-                return;
-            }
 
             // First verify the player exists in the database
             const playerRef = ref(database, `tournaments/${tournamentId}/players/${playerId}`);
             const snapshot = await get(playerRef);
 
             if (!snapshot.exists()) {
-                setDebugLog(`❌ שחקן לא נמצא בדאטהבייס עם id ${playerId}`);
                 return;
             }
 
@@ -417,14 +412,33 @@ export default function TournamentPage() {
             await update(playerRef, {
                 eliminated: !playerData.eliminated
             });
-
-            setDebugLog(`✅ הדחה: ${playerData.name} (${playerId})`);
+            if (!playerData.eliminated) {
+                speak(`${playerData.name} הודח`);
+            }
 
         } catch (error) {
             console.error("Error toggling player elimination:", error);
-            setDebugLog(`❌ שגיאה בעדכון מצב שחקן: ${error.message}`);
         }
     };
+
+    useEffect(() => {
+        if (!tournamentStarted || !speechAllowed || !currentStage) return;
+
+        // Only speak if we haven't announced this stage yet
+        if (!stageAnnouncementRef.current) {
+            if (currentStage.break) {
+                speak('הפסקה');
+            } else if (typeof currentStage.smallBlind === 'number' && typeof currentStage.bigBlind === 'number') {
+                speak(`שמאל ${currentStage.smallBlind}, ביג ${currentStage.bigBlind}`);
+            }
+            // Mark this stage as announced
+            stageAnnouncementRef.current = true;
+        }
+
+        // This effect depends on speak
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentStageIndex, speechAllowed, currentStage, tournamentStarted, speak]);
+
 
     // Start editing stage
     const startEditStage = (index) => {
@@ -444,9 +458,6 @@ export default function TournamentPage() {
 
     return (
         <div style={{ backgroundColor: '#0e0e0e', color: '#ffffff', minHeight: '100vh', fontFamily: 'sans-serif', padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ color: 'white', marginTop: '1rem', fontSize: '0.8rem' }}>
-                Debug: {debugLog}
-            </div>
 
             {!tournamentStarted && (
                 <button
@@ -479,6 +490,7 @@ export default function TournamentPage() {
                         lastClickedIndex={lastClickedIndex}
                         setLastClickedIndex={setLastClickedIndex}
                         startEditStage={startEditStage}
+                        startAddStage={startAddStage}
                         buttonStyle={buttonStyle}
                     />
 

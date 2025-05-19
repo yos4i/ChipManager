@@ -6,8 +6,10 @@ export default function StagesList({
                                        lastClickedIndex,
                                        setLastClickedIndex,
                                        startEditStage,
+                                       startAddStage,
                                        buttonStyle
                                    }) {
+
     return (
         <div
             style={{
@@ -63,7 +65,7 @@ export default function StagesList({
             <div style={{ marginTop: '2rem', textAlign: 'center' }}>
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                     <button
-                        onClick={() => startEditStage(null)}
+                        onClick={startAddStage}
                         style={buttonStyle}
                     >
                         הוסף שלב
